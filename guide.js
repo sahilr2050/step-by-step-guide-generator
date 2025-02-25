@@ -82,10 +82,13 @@ document.addEventListener('DOMContentLoaded', function () {
           <div class="step-details">
             <div class="step-description">
               <div id="${descriptionId}" class="step-desc-content">${getStepDescription(step, stepNumber)}</div>
-              <button class="btn btn-primary btn-sm edit-description mt-2" data-step="${index}">Edit</button>
+              <div class="step-actions">
+                <button class="btn btn-primary btn-sm edit-description mt-2" data-step="${index}">Edit</button>
+                <button class="btn btn-secondary btn-sm copy-description mt-2" data-step="${index}">Copy</button>
+              </div>
               <div class="editing-controls" id="editing-controls-${index}">
                 <button class="btn btn-sm btn-success save-btn save-description" data-step="${index}">Save</button>
-                <button class="btn btn-sm btn-danger  cancel-btn cancel-edit" data-step="${index}">Cancel</button>
+                <button class="btn btn-sm btn-danger cancel-btn cancel-edit" data-step="${index}">Cancel</button>
               </div>
             </div>
             <div class="step-element-info">
@@ -98,6 +101,7 @@ document.addEventListener('DOMContentLoaded', function () {
           ${imageSrc ? `
             <div class="step-screenshot">
               <img src="${imageSrc}" alt="Screenshot of step ${stepNumber}" class="step-image" data-step="${index}">
+              <button class="btn btn-primary btn-sm download-image mt-2" data-step="${index}">Download Image</button>
             </div>
           ` : ''}
         </div>
@@ -144,6 +148,61 @@ document.addEventListener('DOMContentLoaded', function () {
         cancelEdit(stepIndex);
       });
     });
+
+    // Copy description buttons
+    document.querySelectorAll('.copy-description').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const stepIndex = parseInt(this.dataset.step);
+        copyDescription(stepIndex);
+      });
+    });
+
+    // Download image buttons
+    document.querySelectorAll('.download-image').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const stepIndex = parseInt(this.dataset.step);
+        downloadImage(stepIndex);
+      });
+    });
+  }
+
+  // Copy description function
+  function copyDescription(stepIndex) {
+    const descElement = document.getElementById(`step-desc-${stepIndex}`);
+    const textToCopy = descElement.innerText || descElement.textContent;
+    
+    navigator.clipboard.writeText(textToCopy).then(() => {
+      // Show success feedback
+      const btn = document.querySelector(`.copy-description[data-step="${stepIndex}"]`);
+      const originalText = btn.textContent;
+      btn.textContent = 'Copied!';
+      
+      setTimeout(() => {
+        btn.textContent = originalText;
+      }, 1500);
+    }).catch(err => {
+      console.error('Failed to copy text: ', err);
+      alert('Failed to copy text. Please try again.');
+    });
+  }
+
+  // Download image function
+  function downloadImage(stepIndex) {
+    const step = currentGuide.steps[stepIndex];
+    const imageSrc = step.blurredScreenshot || step.screenshot;
+    
+    if (!imageSrc) {
+      alert('No image available to download');
+      return;
+    }
+
+    // Create a temporary link to download the image
+    const a = document.createElement('a');
+    a.href = imageSrc;
+    a.download = `step-${stepIndex + 1}-${currentGuide.name.replace(/\s+/g, '-').toLowerCase()}.png`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   }
 
   // Description editing functions
@@ -161,7 +220,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Show editing controls
     document.getElementById(`editing-controls-${stepIndex}`).style.display = 'block';
-    document.querySelector(`.edit-description[data-step="${stepIndex}"]`).style.display = 'none';
+    document.querySelector(`.step-actions[data-step="${stepIndex}"]`).style.display = 'none';
   }
 
   function saveDescription(stepIndex) {
@@ -185,7 +244,7 @@ document.addEventListener('DOMContentLoaded', function () {
     descElement.contentEditable = false;
     descElement.classList.remove('editable');
     document.getElementById(`editing-controls-${stepIndex}`).style.display = 'none';
-    document.querySelector(`.edit-description[data-step="${stepIndex}"]`).style.display = 'inline-block';
+    document.querySelector(`.step-actions[data-step="${stepIndex}"]`).style.display = 'flex';
   }
 
   function cancelEdit(stepIndex) {
@@ -198,7 +257,7 @@ document.addEventListener('DOMContentLoaded', function () {
     descElement.contentEditable = false;
     descElement.classList.remove('editable');
     document.getElementById(`editing-controls-${stepIndex}`).style.display = 'none';
-    document.querySelector(`.edit-description[data-step="${stepIndex}"]`).style.display = 'inline-block';
+    document.querySelector(`.step-actions[data-step="${stepIndex}"]`).style.display = 'flex';
   }
 
   // Image modal functions
@@ -442,68 +501,6 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   // Mouse move and up events for dragging and resizing
-  // Fix blur region positioning
-  function createBlurRegion(x, y, width, height) {
-    const canvas = document.getElementById('blurCanvas');
-    if (!canvas) return;
-
-    // Create canvas container if not exists
-    let container = document.querySelector('.canvas-container');
-    if (!container) {
-      container = document.createElement('div');
-      container.className = 'canvas-container';
-      container.style.position = 'relative';
-      canvas.parentNode.insertBefore(container, canvas);
-      container.appendChild(canvas);
-    }
-
-    // Create visual representation of blur region
-    const region = document.createElement('div');
-    region.className = 'blur-region';
-
-    // Position relative to the canvas - position directly with pixel values
-    region.style.position = 'absolute';
-    region.style.width = width + 'px';
-    region.style.height = height + 'px';
-    region.style.left = x + 'px';
-    region.style.top = y + 'px';
-
-    // Create delete button
-    const deleteBtn = document.createElement('button');
-    deleteBtn.className = 'blur-delete-btn';
-    deleteBtn.innerHTML = '×';
-    deleteBtn.title = 'Remove this blur region';
-
-    // Create resize handle
-    const handle = document.createElement('div');
-    handle.className = 'blur-handle';
-
-    region.appendChild(deleteBtn);
-    region.appendChild(handle);
-    container.appendChild(region);
-
-    // Store actual canvas coordinates in the blur regions array
-    const blurRegion = {
-      element: region,
-      x: x,
-      y: y,
-      width: width,
-      height: height
-    };
-
-    blurRegions.push(blurRegion);
-
-    // Set up event handlers
-    setupBlurRegionEvents(region, handle, deleteBtn, canvas, blurRegion);
-
-    // Apply blur to canvas immediately
-    applyBlursToCanvas(canvas.getContext('2d'));
-
-    return blurRegion;
-  }
-
-  // Update mouse move handler
-  // Updated mouse move handler with proper scaling
   document.addEventListener('mousemove', function (e) {
     const canvas = document.getElementById('blurCanvas');
     if (!canvas || !currentBlurRegion) return;
@@ -581,6 +578,66 @@ document.addEventListener('DOMContentLoaded', function () {
     currentBlurRegion = null;
   });
 
+  // Fix blur region positioning
+  function createBlurRegion(x, y, width, height) {
+    const canvas = document.getElementById('blurCanvas');
+    if (!canvas) return;
+
+    // Create canvas container if not exists
+    let container = document.querySelector('.canvas-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.className = 'canvas-container';
+      container.style.position = 'relative';
+      canvas.parentNode.insertBefore(container, canvas);
+      container.appendChild(canvas);
+    }
+
+    // Create visual representation of blur region
+    const region = document.createElement('div');
+    region.className = 'blur-region';
+
+    // Position relative to the canvas - position directly with pixel values
+    region.style.position = 'absolute';
+    region.style.width = width + 'px';
+    region.style.height = height + 'px';
+    region.style.left = x + 'px';
+    region.style.top = y + 'px';
+
+    // Create delete button
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'blur-delete-btn';
+    deleteBtn.innerHTML = '×';
+    deleteBtn.title = 'Remove this blur region';
+
+    // Create resize handle
+    const handle = document.createElement('div');
+    handle.className = 'blur-handle';
+
+    region.appendChild(deleteBtn);
+    region.appendChild(handle);
+    container.appendChild(region);
+
+    // Store actual canvas coordinates in the blur regions array
+    const blurRegion = {
+      element: region,
+      x: x,
+      y: y,
+      width: width,
+      height: height
+    };
+
+    blurRegions.push(blurRegion);
+
+    // Set up event handlers
+    setupBlurRegionEvents(region, handle, deleteBtn, canvas, blurRegion);
+
+    // Apply blur to canvas immediately
+    applyBlursToCanvas(canvas.getContext('2d'));
+
+    return blurRegion;
+  }
+
   function removeAllBlurRegions() {
     blurRegions.forEach(region => {
       if (region.element && region.element.parentNode) {
@@ -590,7 +647,7 @@ document.addEventListener('DOMContentLoaded', function () {
     blurRegions = [];
   }
 
-  // Apply blurs to canvas (unchanged, keeps original canvas coordinates)
+  // Apply blurs to canvas
   function applyBlursToCanvas(ctx) {
     if (!ctx || blurRegions.length === 0) return;
 
