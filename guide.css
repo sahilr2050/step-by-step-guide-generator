@@ -1,0 +1,113 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f5f5f5;
+    color: #333;
+  }
+  
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  h1 {
+    margin: 0;
+    color: #1a73e8;
+  }
+  
+  .header-actions {
+    display: flex;
+    gap: 10px;
+  }
+  
+  button {
+    padding: 8px 15px;
+    background-color: #1a73e8;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s;
+  }
+  
+  button:hover {
+    background-color: #0d62d1;
+  }
+  
+  .loading {
+    text-align: center;
+    padding: 30px;
+    font-style: italic;
+    color: #777;
+  }
+  
+  .step {
+    background-color: white;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 25px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
+  
+  .step-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+  
+  .step-number {
+    font-size: 18px;
+    font-weight: bold;
+    color: #1a73e8;
+  }
+  
+  .step-location {
+    font-size: 14px;
+    color: #666;
+  }
+  
+  .step-content {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+  }
+  
+  .step-details {
+    flex: 1;
+  }
+  
+  .step-description {
+    margin-bottom: 10px;
+    font-size: 16px;
+  }
+  
+  .step-element-info {
+    background-color: #f8f8f8;
+    padding: 10px;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+  
+  .step-screenshot {
+    flex: 1;
+    max-width: 50%;
+  }
+  
+  .step-screenshot img {
+    max-width: 100%;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+  }

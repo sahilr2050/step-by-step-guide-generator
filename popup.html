@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Step-by-Step Guide Generator</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Step-by-Step Guide Generator</h1>
+    
+    <div id="start-panel" class="panel">
+      <label for="guide-name">Guide Name:</label>
+      <input type="text" id="guide-name" placeholder="Enter guide name">
+      <button id="start-recording">Start Recording</button>
+    </div>
+    
+    <div id="recording-panel" class="panel hidden">
+      <div class="recording-indicator">Recording...</div>
+      <div class="step-count">Steps recorded: <span id="step-counter">0</span></div>
+      <button id="stop-recording">Stop Recording</button>
+    </div>
+    
+    <div id="result-panel" class="panel hidden">
+      <h2>Recording Complete!</h2>
+      <p><span id="final-step-count"></span> steps recorded</p>
+      <button id="view-guide">View Guide</button>
+      <button id="new-recording">Create New Guide</button>
+    </div>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>
