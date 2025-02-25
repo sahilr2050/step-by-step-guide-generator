@@ -3,6 +3,11 @@ let isRecording = false;
 let currentGuideId = null;
 let highlightElement = null;
 
+// Logger utility
+function log(message, level = 'info') {
+  console[level](`[Content] ${message}`);
+}
+
 // Listen for messages from background script
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   if (request.action === 'recordingStarted') {
@@ -42,8 +47,23 @@ function removeClickListeners() {
   }
 }
 
+// Add a processing flag and debounce mechanism
+let isProcessingClick = false;
+let lastClickTime = 0;
+const CLICK_DEBOUNCE_TIME = 1000; // 1 second debounce
+
 function handleClick(event) {
-  if (!isRecording) return;
+  if (!isRecording || isProcessingClick) return;
+  
+  // Implement debounce to prevent multiple rapid captures
+  const now = Date.now();
+  if (now - lastClickTime < CLICK_DEBOUNCE_TIME) {
+    return;
+  }
+  lastClickTime = now;
+  
+  // Set processing flag to prevent multiple captures
+  isProcessingClick = true;
   
   // Prevent default action to capture the click
   event.preventDefault();
@@ -85,6 +105,9 @@ function handleClick(event) {
           document.body.removeChild(highlightElement);
           highlightElement = null;
         }
+        
+        // Reset processing flag before executing the click
+        isProcessingClick = false;
         
         // Now execute the original click
         simulateClick(element);
