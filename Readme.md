@@ -2,7 +2,8 @@
 
 A Chrome extension that allows users to easily create, edit and share interactive step-by-step guides with annotated screenshots.
 
-![Extension Banner](images/banner.png)
+![Guide List](screenshots/Guide_list.png)
+![Extension Popup](screenshots/Popup.png)
 
 ## Features
 
@@ -67,7 +68,7 @@ This extension:
 
 This extension is completely free! If you find it useful and would like to support continued development, please consider:
 
-<a href="https://www.buymeacoffee.com/YourUsername">
+<a href="https://buymeacoffee.com/sahilr2050">
   <img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: auto !important;width: auto !important;" >
 </a>
 
