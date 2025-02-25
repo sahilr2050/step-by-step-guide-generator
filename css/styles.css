@@ -30,7 +30,6 @@ header {
   background-color: white;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   padding: 15px 0;
-  margin-bottom: 30px;
 }
 
 .header-content {
@@ -40,6 +39,23 @@ header {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
+}
+
+.sidebar {
+  width: 200px;
+  float: left;
+  background-color: #f5f5f5;
+  border-right: 1px solid #e0e0e0;
+  padding: 10px;
+  box-sizing: border-box;
+  height: 100vh;
+}
+
+.sidebar-header {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  text-align: center;
 }
 
 h1 {
@@ -549,4 +565,23 @@ table.dataTable tbody tr:hover {
   .section-actions {
     margin-top: 10px;
   }
+}
+
+#step-list {
+  list-style-type: none;
+  padding: 0;
+}
+
+#step-list li {
+  padding: 8px;
+  margin-bottom: 5px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: move;
+}
+
+#step-list li.dragging {
+  opacity: 0.5;
+  background-color: #e0e0e0;
 }

@@ -49,6 +49,7 @@ export default {
       Store.currentGuide = data[Store.guideId];
       Store.guideTitle.textContent = Store.currentGuide.name;
       Renderer.renderGuide(Store.currentGuide);
+      Renderer.renderSidebar(Store.currentGuide.steps);
     });
   },
   
