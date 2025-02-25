@@ -1,3 +1,8 @@
+// Logger utility
+function log(message, level = 'info') {
+  console[level](`[Popup] ${message}`);
+}
+
 document.addEventListener('DOMContentLoaded', function() {
   const startPanel = document.getElementById('start-panel');
   const recordingPanel = document.getElementById('recording-panel');
@@ -14,11 +19,16 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Check if we're already recording
   chrome.storage.local.get(['isRecording', 'currentGuideId', 'stepCount'], function(data) {
+    if (chrome.runtime.lastError) {
+      log(`Error retrieving storage data: ${chrome.runtime.lastError}`, 'error');
+      return;
+    }
     if (data.isRecording) {
       startPanel.classList.add('hidden');
       recordingPanel.classList.remove('hidden');
       stepCounter.textContent = data.stepCount || 0;
       currentGuideId = data.currentGuideId;
+      log('Resumed recording session.');
     }
   });
   

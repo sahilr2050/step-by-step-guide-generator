@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Step-by-Step Guide Generator",
   "version": "1.0",
-  "description": "Create step-by-step guides by recording user actions with highlighted screenshots",
+  "description": "Create step-by-step guides by recording user actions with highlighted screenshots. Includes logging for debugging and tracking.",
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
@@ -16,15 +16,8 @@
     "48": "images/icon48.png",
     "128": "images/icon128.png"
   },
-  "permissions": [
-    "activeTab",
-    "scripting",
-    "storage",
-    "tabs"
-  ],
-  "host_permissions": [
-    "<all_urls>"
-  ],
+  "permissions": ["activeTab", "scripting", "storage", "tabs"],
+  "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "background.js"
   },
