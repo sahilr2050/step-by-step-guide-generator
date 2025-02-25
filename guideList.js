@@ -23,19 +23,25 @@ $(document).ready(function () {
 
 // Load guides from Chrome storage
 window.loadGuides = function () {
-  // Initialize DataTable
-  let table = $('#guidesTable').DataTable({
-    language: {
-      emptyTable: '<div class="empty-state"><div class="empty-state-icon">📚</div><h3>No guides yet</h3><p>Create your first guide to get started!</p></div>'
-    },
-    responsive: true,
-    columnDefs: [
-      { targets: 2, orderable: false }
-    ],
-    order: [[1, 'desc']], // Sort by date descending
-    dom: '<"top"lf>rt<"bottom"ip>',
-    lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]]
-  });
+  // Check if DataTable is already initialized
+  let table;
+  if ($.fn.DataTable.isDataTable('#guidesTable')) {
+    table = $('#guidesTable').DataTable();
+  } else {
+    // Initialize DataTable if not already initialized
+    table = $('#guidesTable').DataTable({
+      language: {
+        emptyTable: '<div class="empty-state"><div class="empty-state-icon">📚</div><h3>No guides yet</h3><p>Create your first guide to get started!</p></div>'
+      },
+      responsive: true,
+      columnDefs: [
+        { targets: 2, orderable: false }
+      ],
+      order: [[1, 'desc']], // Sort by date descending
+      dom: '<"top"lf>rt<"bottom"ip>',
+      lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]]
+    });
+  }
 
   chrome.storage.local.get(null, function (data) {
     // Clear existing data
@@ -56,9 +62,9 @@ window.loadGuides = function () {
       const formattedDate = new Date(guide.date).toLocaleDateString();
       const actions = `
           <div class="action-btn-group">
-            <button class="action-btn view-btn" data-id="${guide.id}">View</button>
-            <button class="action-btn edit-btn" data-id="${guide.id}">Rename</button>
-            <button class="action-btn delete-btn" data-id="${guide.id}">Delete</button>
+            <button class="btn btn-sm btn-primary view-btn" data-id="${guide.id}"><i class="fas fa-eye"></i></button>
+            <button class="btn btn-sm btn-warning edit-btn" data-id="${guide.id}"><i class="fas fa-pencil-alt"></i></button>
+            <button class="btn btn-sm btn-danger delete-btn" data-id="${guide.id}"><i class="fas fa-trash"></i></button>
           </div>
         `;
 
@@ -89,7 +95,7 @@ window.renameGuide = function (id) {
     const currentName = data[id] ? data[id].name : '';
 
     Swal.fire({
-      title: 'Enter new guide name',
+      title: 'Enter New Guide Name',
       input: 'text',
       inputValue: currentName,
       showCancelButton: true,
@@ -108,7 +114,11 @@ window.renameGuide = function (id) {
           if (data[id]) {
             data[id].name = newName;
             chrome.storage.local.set({ [id]: data[id] }, function () {
-              Swal.fire('Guide renamed successfully');
+              Swal.fire({
+                title: 'Guide Renamed',
+                text: 'Guide renamed successfully',
+                icon: 'success',
+              });
               loadGuides(); // Reload guides instead of page refresh
             });
           }

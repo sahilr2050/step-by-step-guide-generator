@@ -17,8 +17,8 @@
       </a>
       <h1 id="guide-title">Step-by-Step Guide</h1>
       <div class="header-actions">
-        <button id="export-pdf">Export as PDF</button>
-        <button id="export-html">Export as HTML</button>
+        <button class="btn btn-primary" id="export-pdf">Export as PDF</button>
+        <button class="btn btn-primary" id="export-html">Export as HTML</button>
       </div>
     </div>
   </header>
@@ -26,6 +26,19 @@
   <div class="container">
     <div id="guide-content">
       <div class="loading">Loading guide...</div>
+    </div>
+  </div>
+
+  <!-- Image Modal -->
+  <div id="imageModal" class="modal">
+    <span class="modal-close">&times;</span>
+    <div class="modal-content">
+      <div class="blur-controls">
+        <button id="addBlurRegion" class="btn btn-primary">Add Blur Region</button>
+        <button id="saveBlurredImage" class="btn btn-success">Save Changes</button>
+        <button id="removeBlurRegion" class="btn btn-danger">Remove All Blurs</button>
+      </div>
+      <img id="modalImage" class="modal-image" src="" alt="Screenshot">
     </div>
   </div>
 
