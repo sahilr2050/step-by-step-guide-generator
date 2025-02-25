@@ -25,33 +25,34 @@ document.addEventListener('DOMContentLoaded', function () {
       return;
     }
 
+    // Handle resume guide separately from ongoing recording
+    if (data.resumeGuideId) {
+      // Get the guide info
+      chrome.storage.local.get([data.resumeGuideId], function (guideData) {
+        const guide = guideData[data.resumeGuideId];
+
+        if (guide) {
+          // Fill in the guide name
+          guideNameInput.value = guide.name;
+
+          // Mark guide as being resumed
+          currentGuideId = data.resumeGuideId;
+
+          // Update UI to show we're resuming
+          startRecordingBtn.textContent = 'Resume Recording';
+
+          // Clear the resumeGuideId flag so it doesn't persist
+          chrome.storage.local.remove('resumeGuideId');
+        }
+      });
+    }
+
     if (data.isRecording) {
       startPanel.classList.add('hidden');
       recordingPanel.classList.remove('hidden');
       stepCounter.textContent = data.stepCount || 0;
       currentGuideId = data.currentGuideId;
       log('Resumed recording session.');
-
-      if (data.resumeGuideId) {
-        // Get the guide info
-        chrome.storage.local.get([data.resumeGuideId], function(guideData) {
-          const guide = guideData[data.resumeGuideId];
-          
-          if (guide) {
-            // Fill in the guide name
-            guideNameInput.value = guide.name;
-            
-            // Mark guide as being resumed
-            currentGuideId = data.resumeGuideId;
-            
-            // Update UI to show we're resuming
-            document.getElementById('start-recording').textContent = 'Resume Recording';
-            
-            // Clear the resumeGuideId flag so it doesn't persist
-            chrome.storage.local.remove('resumeGuideId');
-          }
-        });
-      }
     }
 
   });
@@ -65,29 +66,61 @@ document.addEventListener('DOMContentLoaded', function () {
       return;
     }
 
-    currentGuideId = Date.now().toString();
-    const guideData = {
-      id: currentGuideId,
-      name: guideName,
-      steps: [],
-      dateCreated: new Date().toISOString()
-    };
+    let isResuming = false;
 
-    chrome.storage.local.set({
-      isRecording: true,
-      currentGuideId: currentGuideId,
-      stepCount: 0,
-      [currentGuideId]: guideData
-    }, function () {
+    // If currentGuideId is already set, we're resuming
+    if (!currentGuideId) {
+      currentGuideId = Date.now().toString();
+    } else {
+      isResuming = true;
+    }
+
+    // Set up storage for new guide or get existing data
+    if (!isResuming) {
+      // This is a new guide
+      const guideData = {
+        id: currentGuideId,
+        name: guideName,
+        steps: [],
+        dateCreated: new Date().toISOString()
+      };
+
+      chrome.storage.local.set({
+        isRecording: true,
+        currentGuideId: currentGuideId,
+        stepCount: 0,
+        [currentGuideId]: guideData
+      }, startRecordingProcess);
+    } else {
+      // This is resuming an existing guide - get current step count
+      chrome.storage.local.get([currentGuideId], function (data) {
+        const existingGuide = data[currentGuideId];
+        const currentStepCount = existingGuide.steps ? existingGuide.steps.length : 0;
+
+        // Just update the recording state
+        chrome.storage.local.set({
+          isRecording: true,
+          currentGuideId: currentGuideId,
+          stepCount: currentStepCount
+        }, startRecordingProcess);
+      });
+    }
+
+    function startRecordingProcess() {
       startPanel.classList.add('hidden');
       recordingPanel.classList.remove('hidden');
+
+      // Get the current step count to display
+      chrome.storage.local.get(['stepCount'], function (data) {
+        stepCounter.textContent = data.stepCount || 0;
+      });
 
       // Send message to background script to start recording
       chrome.runtime.sendMessage({
         action: 'startRecording',
         guideId: currentGuideId
       });
-    });
+    }
   });
 
   // Stop recording
