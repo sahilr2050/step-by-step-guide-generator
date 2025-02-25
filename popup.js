@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const finalStepCount = document.getElementById('final-step-count');
   const viewGuideBtn = document.getElementById('view-guide');
   const newRecordingBtn = document.getElementById('new-recording');
+  const viewCreatedGuidesBtn = document.getElementById('view-created-guides');
   
   let currentGuideId = null;
   
@@ -97,6 +98,18 @@ document.addEventListener('DOMContentLoaded', function() {
     resultPanel.classList.add('hidden');
     startPanel.classList.remove('hidden');
     guideNameInput.value = '';
+  });
+  
+  // View Created Guides button
+  viewCreatedGuidesBtn.addEventListener('click', function() {
+    chrome.storage.local.get(null, function(data) {
+      const guideIds = Object.keys(data).filter(key => data[key].id);
+      if (guideIds.length === 0) {
+        alert('No guides found.');
+        return;
+      }
+      window.open('guideList.html', '_blank');
+    });
   });
   
   // Listen for step count updates

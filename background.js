@@ -3,20 +3,15 @@ let isRecording = false;
 let currentGuideId = null;
 let stepCount = 0;
 
-// Logger utility
-function log(message, level = 'info') {
-  console[level](`[Background] ${message}`);
-}
-
 // Listen for messages from popup or content script
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-  log(`Received message: ${request.action}`);
+  console.log(`Received message: ${request.action}`);
 
   if (request.action === "startRecording") {
     isRecording = true;
     currentGuideId = request.guideId;
     stepCount = 0;
-    log(`Started recording for guide ID: ${currentGuideId}`);
+    console.log(`Started recording for guide ID: ${currentGuideId}`);
 
     // Notify all tabs that recording has started
     chrome.tabs.query({}, function (tabs) {
@@ -27,9 +22,9 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
             guideId: currentGuideId,
           }, function(response) {
             if (chrome.runtime.lastError) {
-              log(`Error sending message to tab ${tab.id}: ${chrome.runtime.lastError.message}`, 'error');
+              console.log(`Error sending message to tab ${tab.id}: ${chrome.runtime.lastError.message}`, 'error');
             } else {
-              log(`Message sent to tab ${tab.id}: ${response}`);
+              console.log(`Message sent to tab ${tab.id}: ${response}`);
             }
           });
         }
@@ -42,7 +37,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 
   if (request.action === "stopRecording") {
     isRecording = false;
-    log('Stopped recording.');
+    console.log('Stopped recording.');
 
     // Notify all tabs that recording has stopped
     chrome.tabs.query({}, function (tabs) {
@@ -60,7 +55,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   if (request.action === "recordStep") {
     if (isRecording && currentGuideId) {
       stepCount++;
-      log(`Recorded step ${stepCount} for guide ID: ${currentGuideId}`);
+      console.log(`Recorded step ${stepCount} for guide ID: ${currentGuideId}`);
 
       // Get the current guide data
       chrome.storage.local.get([currentGuideId], function (data) {
@@ -76,10 +71,10 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
             },
             function () {
               if (chrome.runtime.lastError) {
-                log(`Error saving step data: ${JSON.stringify(chrome.runtime.lastError)}`, 'error');
+                console.log(`Error saving step data: ${JSON.stringify(chrome.runtime.lastError)}`, 'error');
                 return;
               }
-              log(`Step data saved. Total steps: ${stepCount}`);
+              console.log(`Step data saved. Total steps: ${stepCount}`);
               // Notify popup of step count update
               chrome.runtime.sendMessage({
                 action: "updateStepCount",

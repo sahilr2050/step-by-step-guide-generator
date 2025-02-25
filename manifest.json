@@ -27,5 +27,11 @@
       "js": ["content.js"],
       "css": ["highlight.css"]
     }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["libs/*"],
+      "matches": ["<all_urls>"]
+    }
   ]
 }

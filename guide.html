@@ -1,24 +1,45 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Step-by-Step Guide</title>
-  <link rel="stylesheet" href="guide.css">
+  <link rel="stylesheet" href="libs/css/styles.css">
 </head>
+
 <body>
-  <div class="container">
-    <header>
+  <header>
+    <div class="header-content">
+      <a href="guideList.html" class="btn btn-primary">
+        <i class="fas fa-arrow-left"></i>
+        Back
+      </a>
       <h1 id="guide-title">Step-by-Step Guide</h1>
       <div class="header-actions">
         <button id="export-pdf">Export as PDF</button>
         <button id="export-html">Export as HTML</button>
       </div>
-    </header>
-    
+    </div>
+  </header>
+
+  <div class="container">
     <div id="guide-content">
       <div class="loading">Loading guide...</div>
     </div>
   </div>
-  
+
+  <!-- jQuery -->
+  <script src="libs/jquery.min.js"></script>
+
+  <!-- DataTables -->
+  <script src="libs/jquery.dataTables.min.js"></script>
+
+  <!-- SweetAlert2 -->
+  <script src="libs/sweetalert2.all.min.js"></script>
+
+  <!-- Custom JavaScript -->
   <script src="guide.js"></script>
 </body>
+
 </html>
