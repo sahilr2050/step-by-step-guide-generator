@@ -2,6 +2,7 @@
 let isRecording = false;
 let currentGuideId = null;
 let highlightElement = null;
+let hoverHighlightElement = null;
 
 // Logger utility
 function log(message, level = 'info') {
@@ -71,6 +72,12 @@ function handleClick(event) {
 
   const element = event.target;
 
+  // Remove hover highlight if it exists
+  if (hoverHighlightElement) {
+    document.body.removeChild(hoverHighlightElement);
+    hoverHighlightElement = null;
+  }
+
   // Create highlight effect
   highlightElement = createHighlight(element);
   document.body.appendChild(highlightElement);
@@ -105,13 +112,21 @@ function handleClick(event) {
           document.body.removeChild(highlightElement);
           highlightElement = null;
         }
+      }, 200);
 
         // Reset processing flag before executing the click
         isProcessingClick = false;
 
+        // Re-add hover listeners after a short delay
+        setTimeout(() => {
+          // Only re-enable hover if we're still recording
+          if (isRecording) {
+            addHoverListeners();
+          }
+        }, 500);
+
         // Now execute the original click
-        simulateClick(element);
-      }, 200);
+        simulateClick(element);        
     });
   }, 300);
 }
@@ -182,4 +197,125 @@ function simulateClick(element) {
     view: window
   });
   element.dispatchEvent(event);
+}
+
+// Add mouseover and mouseout event listeners
+function addHoverListeners() {
+  document.addEventListener('mouseover', handleMouseOver, true);
+  document.addEventListener('mouseout', handleMouseOut, true);
+}
+
+function removeHoverListeners() {
+  document.removeEventListener('mouseover', handleMouseOver, true);
+  document.removeEventListener('mouseout', handleMouseOut, true);
+}
+
+function handleMouseOver(event) {
+  if (!isRecording || isProcessingClick) return;
+  
+  const element = event.target;
+  
+  // Skip if hovering over our own highlight elements
+  if (element.classList.contains('step-highlight') || 
+      element === hoverHighlightElement ||
+      element.closest('.step-highlight')) {
+    return;
+  }
+  
+  // Create hover highlight
+  if (hoverHighlightElement) {
+    document.body.removeChild(hoverHighlightElement);
+  }
+  
+  hoverHighlightElement = createHoverHighlight(element);
+  document.body.appendChild(hoverHighlightElement);
+}
+
+function handleMouseOut(event) {
+  if (!isRecording || isProcessingClick) return;
+  
+  // Check if we're still within the same element or its children
+  const relatedTarget = event.relatedTarget;
+  if (relatedTarget && (event.target.contains(relatedTarget) || event.target === relatedTarget)) {
+    return;
+  }
+  
+  // Remove hover highlight
+  if (hoverHighlightElement) {
+    document.body.removeChild(hoverHighlightElement);
+    hoverHighlightElement = null;
+  }
+}
+
+function createHoverHighlight(element) {
+  const rect = element.getBoundingClientRect();
+  const highlight = document.createElement('div');
+
+  highlight.className = 'hover-highlight';
+  highlight.style.position = 'fixed';
+  highlight.style.left = `${rect.left}px`;
+  highlight.style.top = `${rect.top}px`;
+  highlight.style.width = `${rect.width}px`;
+  highlight.style.height = `${rect.height}px`;
+  highlight.style.border = '2px dashed #1a73e8';
+  highlight.style.borderRadius = '2px';
+  highlight.style.zIndex = '9999998';
+  highlight.style.pointerEvents = 'none';
+  highlight.style.boxShadow = 'none';  // No shadow to distinguish from click
+  
+  // Add a tooltip with element info
+  const tooltip = document.createElement('div');
+  tooltip.className = 'hover-tooltip';
+  tooltip.textContent = element.tagName.toLowerCase();
+  if (element.id) tooltip.textContent += `#${element.id}`;
+  if (element.textContent?.trim()) {
+    const text = element.textContent.trim().substring(0, 30);
+    tooltip.textContent += ` "${text}${element.textContent.length > 30 ? '...' : ''}"`;
+  }
+  
+  tooltip.style.position = 'absolute';
+  tooltip.style.top = '-25px';
+  tooltip.style.left = '0';
+  tooltip.style.backgroundColor = '#1a73e8';
+  tooltip.style.color = 'white';
+  tooltip.style.padding = '3px 6px';
+  tooltip.style.borderRadius = '3px';
+  tooltip.style.fontSize = '12px';
+  tooltip.style.maxWidth = '200px';
+  tooltip.style.overflow = 'hidden';
+  tooltip.style.textOverflow = 'ellipsis';
+  tooltip.style.whiteSpace = 'nowrap';
+  
+  highlight.appendChild(tooltip);
+  
+  return highlight;
+}
+
+// Temporarily disable hover listeners during click processing
+function addClickListeners() {
+  document.addEventListener('click', function(event) {
+    // First remove hover listeners when click starts
+    removeHoverListeners();
+    // Then process the click
+    handleClick(event);
+  }, true);
+  
+  // Add hover listeners initially
+  addHoverListeners();
+}
+
+// Update the removeClickListeners function to also remove hover listeners
+function removeClickListeners() {
+  document.removeEventListener('click', handleClick, true);
+  removeHoverListeners(); // Add this line
+  
+  if (highlightElement) {
+    document.body.removeChild(highlightElement);
+    highlightElement = null;
+  }
+  
+  if (hoverHighlightElement) {
+    document.body.removeChild(hoverHighlightElement);
+    hoverHighlightElement = null;
+  }
 }

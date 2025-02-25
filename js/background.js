@@ -1,4 +1,5 @@
-// Background script
+import StorageManager from './storage-manager.js';
+
 let isRecording = false;
 let currentGuideId = null;
 let stepCount = 0;
@@ -57,14 +58,27 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     if (isRecording && currentGuideId) {
       stepCount++;
       console.log(`Recorded step ${stepCount} for guide ID: ${currentGuideId}`);
-
+  
       // Get the current guide data
       chrome.storage.local.get([currentGuideId], function (data) {
         if (data[currentGuideId]) {
           const guideData = data[currentGuideId];
-          guideData.steps.push(request.stepData);
-
-          // Save updated guide data
+          
+          // Create a unique key for this screenshot
+          const screenshotKey = `${currentGuideId}_${guideData.steps.length}`;
+          
+          // Create a copy of step data without the large screenshot
+          const stepDataWithoutScreenshot = { ...request.stepData };
+          const screenshot = stepDataWithoutScreenshot.screenshot;
+          stepDataWithoutScreenshot.screenshot = null;
+          
+          // Store reference to screenshot in IndexedDB
+          stepDataWithoutScreenshot.screenshotKey = screenshotKey;
+          
+          // Add the step data to the guide
+          guideData.steps.push(stepDataWithoutScreenshot);
+  
+          // Save updated guide data to chrome.storage
           chrome.storage.local.set(
             {
               [currentGuideId]: guideData,
@@ -75,7 +89,20 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
                 console.log(`Error saving step data: ${JSON.stringify(chrome.runtime.lastError)}`, 'error');
                 return;
               }
+              
+              // Save the screenshot to IndexedDB
+              if (screenshot) {
+                StorageManager.saveScreenshot(screenshotKey, screenshot)
+                  .then(() => {
+                    console.log(`Screenshot saved to IndexedDB with key: ${screenshotKey}`);
+                  })
+                  .catch(error => {
+                    console.error(`Failed to save screenshot to IndexedDB: ${error}`);
+                  });
+              }
+              
               console.log(`Step data saved. Total steps: ${stepCount}`);
+              
               // Notify popup of step count update
               chrome.runtime.sendMessage({
                 action: "updateStepCount",
@@ -86,7 +113,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         }
       });
     }
-
+  
     sendResponse({ success: true });
     return true;
   }
@@ -107,6 +134,13 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     });
     
     sendResponse({ success: true });
+    return true;
+  }
+  
+  if (request.action === "getScreenshot") {
+    StorageManager.getScreenshot(request.key)
+      .then(screenshot => sendResponse({screenshot}))
+      .catch(error => sendResponse({error: error.message}));
     return true;
   }
 });

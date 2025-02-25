@@ -1,4 +1,4 @@
-// renderer.js
+import StorageManager from '../storage-manager.js';
 import Store from './store.js';
 import Core from './core.js';
 import Utils from './utils.js';
@@ -27,13 +27,13 @@ export default {
     stepElement.className = 'step';
     stepElement.dataset.stepIndex = index;
     stepElement.dataset.stepId = step.id || step.timestamp;
-
+  
     const stepNumber = index + 1;
     const url = new URL(step.url);
     const displayUrl = `${url.hostname}${url.pathname}`;
     const descriptionId = `step-desc-${index}`;
-    const imageSrc = step.blurredScreenshot || step.screenshot;
-
+    
+    // Basic HTML without screenshot first (we'll add it later)
     stepElement.innerHTML = `
       <div class="step-header">
         <div class="step-number">Step ${stepNumber}</div>
@@ -61,15 +61,59 @@ export default {
             ${step.url ? `<br><strong>URL:</strong> ${displayUrl}` : ''}
           </div>
         </div>
-        ${imageSrc ? `
-          <div class="step-screenshot">
-            <img src="${imageSrc}" alt="Screenshot of step ${stepNumber}" class="step-image" data-step="${index}">
-            <button class="btn btn-primary btn-sm download-image mt-2" data-step="${index}">Download Image</button>
-          </div>
-        ` : ''}
+        <div class="step-screenshot">
+          <div class="screenshot-loading-placeholder" data-step="${index}">Loading screenshot...</div>
+        </div>
       </div>
     `;
-
+    
+    // Create a container for the screenshot that we'll fill later
+    const screenshotContainer = stepElement.querySelector('.step-screenshot');
+    
+    // Load the screenshot from IndexedDB if we have a key
+    if (step.screenshotKey) {
+      StorageManager.getScreenshot(step.screenshotKey)
+        .then(screenshot => {
+          if (screenshot) {
+            // Replace the placeholder with the actual image
+            const imgHTML = `
+              <img src="${screenshot}" alt="Screenshot of step ${stepNumber}" class="step-image" data-step="${index}">
+              <button class="btn btn-primary btn-sm download-image mt-2" data-step="${index}">Download Image</button>
+            `;
+            screenshotContainer.innerHTML = imgHTML;
+            
+            // Add event listeners to the new image
+            const img = screenshotContainer.querySelector('.step-image');
+            img.addEventListener('click', function() {
+              const stepIndex = parseInt(this.dataset.step);
+              ImageTools.openImageModal(screenshot, stepIndex);
+            });
+            
+            const downloadBtn = screenshotContainer.querySelector('.download-image');
+            downloadBtn.addEventListener('click', function() {
+              const stepIndex = parseInt(this.dataset.step);
+              ImageTools.downloadImage(stepIndex);
+            });
+          } else {
+            // No screenshot found
+            screenshotContainer.innerHTML = '<div class="no-screenshot">No screenshot available</div>';
+          }
+        })
+        .catch(error => {
+          console.error(`Error loading screenshot for step ${index}:`, error);
+          screenshotContainer.innerHTML = '<div class="screenshot-error">Failed to load screenshot</div>';
+        });
+    } else if (step.screenshot) {
+      // For backward compatibility - if the screenshot is stored in the step
+      const imgHTML = `
+        <img src="${step.screenshot}" alt="Screenshot of step ${stepNumber}" class="step-image" data-step="${index}">
+        <button class="btn btn-primary btn-sm download-image mt-2" data-step="${index}">Download Image</button>
+      `;
+      screenshotContainer.innerHTML = imgHTML;
+    } else {
+      screenshotContainer.innerHTML = '<div class="no-screenshot">No screenshot available</div>';
+    }
+    
     return stepElement;
   },
 
@@ -127,16 +171,29 @@ export default {
       li.textContent = `⋮⋮ Step ${index + 1}`;
       li.draggable = true;
       li.dataset.index = index;
-
+      li.classList.add('clickable-step'); // Add class for styling
+      
+      // Add click handler to navigate to the step
+      li.addEventListener('click', () => {
+        const stepElement = document.querySelector(`.step[data-step-index="${index}"]`);
+        if (stepElement) {
+          stepElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // Highlight the step briefly
+          stepElement.classList.add('highlight-step');
+          setTimeout(() => stepElement.classList.remove('highlight-step'), 1500);
+        }
+      });
+  
+      // Existing drag event handlers
       li.addEventListener('dragstart', (e) => {
         e.dataTransfer.setData('text/plain', index);
         li.classList.add('dragging');
       });
-
+  
       li.addEventListener('dragend', () => {
         li.classList.remove('dragging');
       });
-
+  
       stepList.appendChild(li);
     });
 

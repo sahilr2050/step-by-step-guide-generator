@@ -1,64 +1,28 @@
-$(document).ready(function () {
-  // Load guides on page load
-  loadGuides();
-
-  // View button click handler
-  $(document).on('click', '.view-btn', function () {
-    const guideId = $(this).data('id');
-    // Redirect to guide view page
-    window.location.href = `guide.html?id=${guideId}`;
-  });
-
-  // Bind event handlers for rename and delete buttons
-  $(document).on('click', '.edit-btn', function () {
-    const guideId = $(this).data('id').toString();
-    renameGuide(guideId);
-  });
-
-  $(document).on('click', '.delete-btn', function () {
-    const guideId = $(this).data('id').toString();
-    deleteGuide(guideId);
-  });
-  
-  $(document).on('click', '.resume-btn', function () {
-    const guideId = $(this).data('id').toString();
-    // Open popup to resume recording for this guide
-    chrome.runtime.sendMessage({
-      action: 'openPopupToResume',
-      guideId: guideId
-    });
-  });
-});
+import StorageManager from './storage-manager.js';
 
 // Load guides from Chrome storage
-window.loadGuides = function () {
-  // Check if DataTable is already initialized
+function loadGuides() {
   let table;
   if ($.fn.DataTable.isDataTable('#guidesTable')) {
     table = $('#guidesTable').DataTable();
   } else {
-    // Initialize DataTable if not already initialized
     table = $('#guidesTable').DataTable({
       language: {
         emptyTable: '<div class="empty-state"><div class="empty-state-icon">📚</div><h3>No guides yet</h3><p>Create your first guide to get started!</p></div>'
       },
       responsive: true,
-      columnDefs: [
-        { targets: 2, orderable: false }
-      ],
-      order: [[1, 'desc']], // Sort by date descending
+      columnDefs: [{ targets: 2, orderable: false }],
+      order: [[1, 'desc']], 
       dom: '<"top"lf>rt<"bottom"ip>',
       lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]]
     });
   }
 
-  chrome.storage.local.get(null, function (data) {
-    // Clear existing data
+  chrome.storage.local.get(null, function(data) {
     table.clear();
-
-    // Filter out non-guide entries and convert to array
+    
     const guides = Object.keys(data)
-      .filter(key => data[key].name && data[key].dateCreated) // Ensure it's a guide
+      .filter(key => data[key].name && data[key].dateCreated)
       .map(id => ({
         id: id,
         name: data[id].name,
@@ -66,25 +30,22 @@ window.loadGuides = function () {
         data: data[id]
       }));
 
-    // Add data to table
     guides.forEach(guide => {
       const formattedDate = new Date(guide.date).toLocaleDateString();
       const actions = `
-          <div class="action-btn-group">
-            <button class="btn btn-sm btn-primary view-btn" data-id="${guide.id}"><i class="fas fa-eye"></i></button>
-            <button class="btn btn-sm btn-success resume-btn" data-id="${guide.id}"><i class="fas fa-play"></i></button>
-            <button class="btn btn-sm btn-warning edit-btn" data-id="${guide.id}"><i class="fas fa-pencil-alt"></i></button>
-            <button class="btn btn-sm btn-danger delete-btn" data-id="${guide.id}"><i class="fas fa-trash"></i></button>
-          </div>
-        `;
+        <div class="action-btn-group">
+          <button class="btn btn-sm btn-primary view-btn" data-id="${guide.id}"><i class="fas fa-eye"></i></button>
+          <button class="btn btn-sm btn-success resume-btn" data-id="${guide.id}"><i class="fas fa-play"></i></button>
+          <button class="btn btn-sm btn-warning edit-btn" data-id="${guide.id}"><i class="fas fa-pencil-alt"></i></button>
+          <button class="btn btn-sm btn-danger delete-btn" data-id="${guide.id}"><i class="fas fa-trash"></i></button>
+        </div>
+      `;
 
       table.row.add([guide.name, formattedDate, actions]);
     });
 
-    // Draw the table
     table.draw();
 
-    // Show empty state if no guides
     if (guides.length === 0) {
       $('#emptyState').show();
     } else {
@@ -93,14 +54,14 @@ window.loadGuides = function () {
   });
 }
 
-// Global function to rename a guide
-window.renameGuide = function (id) {
+// Rename a guide
+function renameGuide(id) {
   if (id === '') {
     console.error('Invalid guide ID');
     return;
   }
 
-  chrome.storage.local.get([id], function (result) {
+  chrome.storage.local.get([id], function(result) {
     const data = result || {};
     const currentName = data[id] ? data[id].name : '';
 
@@ -120,32 +81,32 @@ window.renameGuide = function (id) {
     }).then((result) => {
       if (result.isConfirmed) {
         const newName = result.value;
-        chrome.storage.local.get([id], function (data) {
+        chrome.storage.local.get([id], function(data) {
           if (data[id]) {
             data[id].name = newName;
-            chrome.storage.local.set({ [id]: data[id] }, function () {
+            chrome.storage.local.set({ [id]: data[id] }, function() {
               Swal.fire({
                 title: 'Guide Renamed',
                 text: 'Guide renamed successfully',
                 icon: 'success',
               });
-              loadGuides(); // Reload guides instead of page refresh
+              loadGuides();
             });
           }
         });
       }
     });
   });
-};
+}
 
-// Global function to delete a guide
-window.deleteGuide = function (id) {
+// Delete a guide
+function deleteGuide(id) {
   if (id === '') {
     console.error('Invalid guide ID');
     return;
   }
 
-  chrome.storage.local.get([id], function (result) {
+  chrome.storage.local.get([id], function(result) {
     const data = result || {};
     const guideName = data[id] ? data[id].name : 'this guide';
 
@@ -159,11 +120,55 @@ window.deleteGuide = function (id) {
       confirmButtonColor: '#dc3545'
     }).then((result) => {
       if (result.isConfirmed) {
-        chrome.storage.local.remove(id, function () {
-          Swal.fire('Guide deleted successfully');
-          loadGuides(); // Reload guides instead of page refresh
+        chrome.storage.local.remove(id, function() {
+          StorageManager.deleteGuideScreenshots(id)
+            .then(() => {
+              Swal.fire({
+                title: 'Guide Deleted',
+                text: 'Guide deleted successfully',
+                icon: 'success',
+              });
+              loadGuides();
+            })
+            .catch(error => {
+              console.error('Error deleting screenshots:', error);
+              Swal.fire({
+                title: 'Partial Deletion',
+                text: 'Guide data deleted but some screenshots may remain',
+                icon: 'warning'
+              });
+              loadGuides();
+            });
         });
       }
     });
   });
-};
+}
+
+// Event handlers
+document.addEventListener('DOMContentLoaded', function() {
+  loadGuides();
+
+  document.addEventListener('click', function(event) {
+    const target = event.target.closest('.view-btn, .resume-btn, .edit-btn, .delete-btn');
+    if (!target) return;
+    
+    const guideId = target.dataset.id.toString();
+    
+    if (target.classList.contains('view-btn')) {
+      window.location.href = `guide.html?id=${guideId}`;
+    } else if (target.classList.contains('resume-btn')) {
+      chrome.runtime.sendMessage({
+        action: 'openPopupToResume',
+        guideId: guideId
+      });
+    } else if (target.classList.contains('edit-btn')) {
+      renameGuide(guideId);
+    } else if (target.classList.contains('delete-btn')) {
+      deleteGuide(guideId);
+    }
+  });
+});
+
+// Export functions for external use
+export { loadGuides, renameGuide, deleteGuide };

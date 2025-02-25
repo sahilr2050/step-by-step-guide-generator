@@ -1,24 +1,64 @@
-.step-highlight {
-    position: fixed;
-    border: 3px solid #ff4747;
-    border-radius: 2px;
+@keyframes pulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 2000px rgba(0, 0, 0, 0);
+  }
+
+  70% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 2000px rgba(0, 0, 0, 0.4);
+  }
+
+  100% {
+    transform: scale(1);
     box-shadow: 0 0 0 2000px rgba(0, 0, 0, 0.3);
-    z-index: 9999999;
-    pointer-events: none;
-    animation: pulse 0.5s;
   }
-  
-  @keyframes pulse {
-    0% {
-      transform: scale(0.95);
-      box-shadow: 0 0 0 2000px rgba(0, 0, 0, 0);
-    }
-    70% {
-      transform: scale(1.05);
-      box-shadow: 0 0 0 2000px rgba(0, 0, 0, 0.4);
-    }
-    100% {
-      transform: scale(1);
-      box-shadow: 0 0 0 2000px rgba(0, 0, 0, 0.3);
-    }
+}
+
+.hover-highlight {
+  position: fixed;
+  border: 2px dashed #1a73e8;
+  border-radius: 2px;
+  z-index: 9999998;
+  pointer-events: none;
+  transition: all 0.15s ease-out;
+}
+
+.hover-tooltip {
+  position: absolute;
+  top: -25px;
+  left: 0;
+  background-color: #1a73e8;
+  color: white;
+  padding: 3px 6px;
+  border-radius: 3px;
+  font-size: 12px;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  z-index: 9999999;
+}
+
+/* Update existing .step-highlight for better visual distinction */
+.step-highlight {
+  position: fixed;
+  border: 3px solid #ff4747;
+  border-radius: 2px;
+  box-shadow: 0 0 0 2000px rgba(0, 0, 0, 0.3);
+  z-index: 9999999;
+  pointer-events: none;
+  animation: pulse 0.5s;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .hover-highlight {
+    border-color: #64b5f6;
   }
+
+  .hover-tooltip {
+    background-color: #1565c0;
+  }
+}
