@@ -37,7 +37,6 @@ export default {
     stepElement.innerHTML = `
       <div class="step-header">
         <div class="step-number">Step ${stepNumber}</div>
-        <div class="step-location">${step.title} (${displayUrl})</div>
         <button class="btn btn-danger btn-sm delete-step-btn" data-index="${index}">Delete</button>
       </div>
       <div class="step-content">
@@ -58,6 +57,8 @@ export default {
             ${step.elementInfo.attributes.id ? `<br><strong>ID:</strong> ${step.elementInfo.attributes.id}` : ''}
             ${step.elementInfo.attributes.class ? `<br><strong>Class:</strong> ${step.elementInfo.attributes.class}` : ''}
             ${step.elementInfo.text ? `<br><strong>Text:</strong> "${step.elementInfo.text.substring(0, 100)}${step.elementInfo.text.length > 100 ? '...' : ''}"` : ''}
+            ${step.title ? `<br><strong>Title:</strong> ${step.title}` : ''}
+            ${step.url ? `<br><strong>URL:</strong> ${displayUrl}` : ''}
           </div>
         </div>
         ${imageSrc ? `
