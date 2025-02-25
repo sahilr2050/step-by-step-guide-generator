@@ -6,6 +6,7 @@ let stepCount = 0;
 // Listen for messages from popup or content script
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   console.log(`Received message: ${request.action}`);
+  console.log(`Recording step for guide ID: ${currentGuideId}`);
 
   if (request.action === "startRecording") {
     isRecording = true;
