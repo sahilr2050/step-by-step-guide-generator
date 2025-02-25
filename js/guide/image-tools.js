@@ -1,11 +1,54 @@
-// image-tools.js
 import Store from './store.js';
 import Core from './core.js';
 import SensitivityDetector from './sensitivity-detector.js';
+import StorageManager from '../storage-manager.js';
 
 export default {
   openImageModal(imgSrc, stepIndex) {
     Store.currentStepIndex = stepIndex;
+
+    // If imgSrc is already provided, use it directly
+    if (imgSrc) {
+      this.loadImageIntoModal(imgSrc, stepIndex);
+      return;
+    }
+
+    // Otherwise, try to load from IndexedDB using the key
+    const step = Store.currentGuide.steps[stepIndex];
+    if (step.screenshotKey) {
+      StorageManager.getScreenshot(step.screenshotKey)
+        .then(screenshot => {
+          if (screenshot) {
+            this.loadImageIntoModal(screenshot, stepIndex);
+          } else {
+            Swal.fire({
+              title: 'Error',
+              text: 'Screenshot not found',
+              icon: 'error'
+            });
+          }
+        })
+        .catch(error => {
+          console.error('Error loading screenshot:', error);
+          Swal.fire({
+            title: 'Error',
+            text: 'Failed to load screenshot',
+            icon: 'error'
+          });
+        });
+    } else if (step.screenshot) {
+      // For backward compatibility
+      this.loadImageIntoModal(step.screenshot, stepIndex);
+    } else {
+      Swal.fire({
+        title: 'Error',
+        text: 'No screenshot available for this step',
+        icon: 'error'
+      });
+    }
+  },
+
+  loadImageIntoModal(imgSrc, stepIndex) {
     Store.originalImage = new Image();
     
     Store.originalImage.onload = () => {
@@ -19,30 +62,30 @@ export default {
   setupImageEditor(img, stepIndex) {
     const oldCanvas = document.getElementById('blurCanvas');
     if (oldCanvas) oldCanvas.remove();
-    
+
     const oldContainer = document.querySelector('.canvas-container');
     if (oldContainer) oldContainer.remove();
-    
+
     const container = document.createElement('div');
     container.className = 'canvas-container';
     container.style.position = 'relative';
     container.style.margin = '0 auto';
-    
+
     const modalContent = Store.imageModal.querySelector('.modal-content');
     const maxWidth = modalContent.clientWidth - 40;
-    
+
     let canvasWidth = img.width;
     let canvasHeight = img.height;
     const aspectRatio = img.width / img.height;
-    
+
     if (canvasWidth > maxWidth) {
       canvasWidth = maxWidth;
       canvasHeight = canvasWidth / aspectRatio;
     }
-    
+
     container.style.width = canvasWidth + 'px';
     container.style.height = canvasHeight + 'px';
-    
+
     const canvas = document.createElement('canvas');
     canvas.id = 'blurCanvas';
     canvas.width = img.width;
@@ -50,20 +93,20 @@ export default {
     canvas.style.width = '100%';
     canvas.style.height = '100%';
     canvas.style.display = 'block';
-    
+
     canvas.dataset.scaleX = canvasWidth / img.width;
     canvas.dataset.scaleY = canvasHeight / img.height;
-    
+
     container.appendChild(canvas);
-    
+
     const blurControls = modalContent.querySelector('.blur-controls');
     modalContent.insertBefore(container, blurControls);
-    
+
     const ctx = canvas.getContext('2d');
     ctx.drawImage(img, 0, 0);
-    
+
     Store.blurRegions = [];
-    
+
     if (Store.currentGuide.steps[stepIndex].blurRegions) {
       Store.currentGuide.steps[stepIndex].blurRegions.forEach(region => {
         this.createBlurRegion(region.x, region.y, region.width, region.height);
@@ -74,10 +117,10 @@ export default {
   addBlurRegion() {
     const canvas = document.getElementById('blurCanvas');
     if (!canvas) return;
-    
+
     const width = 100;
     const height = 100;
-    
+
     this.createBlurRegion(
       (canvas.width / 2) - (width / 2),
       (canvas.height / 2) - (height / 2),
@@ -88,11 +131,11 @@ export default {
   createBlurRegion(x, y, width, height) {
     const canvas = document.getElementById('blurCanvas');
     if (!canvas) return;
-    
+
     const container = canvas.parentNode;
     const scaleX = parseFloat(canvas.dataset.scaleX);
     const scaleY = parseFloat(canvas.dataset.scaleY);
-    
+
     const region = document.createElement('div');
     region.className = 'blur-region';
     region.style.position = 'absolute';
@@ -100,72 +143,72 @@ export default {
     region.style.height = (height * scaleY) + 'px';
     region.style.left = (x * scaleX) + 'px';
     region.style.top = (y * scaleY) + 'px';
-    
+
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'blur-delete-btn';
     deleteBtn.innerHTML = '×';
     deleteBtn.title = 'Remove this blur region';
-    
+
     const handle = document.createElement('div');
     handle.className = 'blur-handle';
-    
+
     region.appendChild(deleteBtn);
     region.appendChild(handle);
     container.appendChild(region);
-    
+
     const blurRegion = {
       element: region,
       x, y, width, height
     };
-    
+
     Store.blurRegions.push(blurRegion);
     this.setupBlurRegionEvents(region, handle, deleteBtn, canvas, blurRegion);
     this.applyBlursToCanvas(canvas.getContext('2d'));
-    
+
     return blurRegion;
   },
 
   setupBlurRegionEvents(region, handle, deleteBtn, canvas, blurRegion) {
     deleteBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      
+
       if (region.parentNode) {
         region.parentNode.removeChild(region);
       }
-      
+
       const index = Store.blurRegions.findIndex(r => r === blurRegion);
       if (index !== -1) {
         Store.blurRegions.splice(index, 1);
       }
-      
+
       const ctx = canvas.getContext('2d');
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(Store.originalImage, 0, 0);
       this.applyBlursToCanvas(ctx);
     });
-    
+
     region.addEventListener('mousedown', (e) => {
       if (e.target === handle || e.target === deleteBtn) return;
-      
+
       Store.isDragging = true;
       Store.currentBlurRegion = blurRegion;
-      
+
       const rect = region.getBoundingClientRect();
       Store.startX = e.clientX - rect.left;
       Store.startY = e.clientY - rect.top;
-      
+
       e.preventDefault();
     });
-    
+
     handle.addEventListener('mousedown', (e) => {
       Store.isResizing = true;
       Store.currentBlurRegion = blurRegion;
-      
+
       Store.startWidth = parseFloat(region.style.width);
       Store.startHeight = parseFloat(region.style.height);
       Store.startX = e.clientX;
       Store.startY = e.clientY;
-      
+
       e.preventDefault();
       e.stopPropagation();
     });
@@ -174,45 +217,45 @@ export default {
   handleMouseMove(e) {
     const canvas = document.getElementById('blurCanvas');
     if (!canvas || !Store.currentBlurRegion) return;
-    
+
     const scaleX = parseFloat(canvas.dataset.scaleX);
     const scaleY = parseFloat(canvas.dataset.scaleY);
-    
+
     const container = canvas.parentNode;
     const containerRect = container.getBoundingClientRect();
-    
+
     if (Store.isDragging) {
       let newDisplayX = e.clientX - containerRect.left - Store.startX;
       let newDisplayY = e.clientY - containerRect.top - Store.startY;
-      
+
       newDisplayX = Math.max(0, Math.min(newDisplayX, container.clientWidth - parseFloat(Store.currentBlurRegion.element.style.width)));
       newDisplayY = Math.max(0, Math.min(newDisplayY, container.clientHeight - parseFloat(Store.currentBlurRegion.element.style.height)));
-      
+
       Store.currentBlurRegion.element.style.left = newDisplayX + 'px';
       Store.currentBlurRegion.element.style.top = newDisplayY + 'px';
-      
+
       Store.currentBlurRegion.x = newDisplayX / scaleX;
       Store.currentBlurRegion.y = newDisplayY / scaleY;
-      
+
       this.applyBlursToCanvas(canvas.getContext('2d'));
     }
-    
+
     if (Store.isResizing) {
       const newDisplayWidth = Math.max(20, Store.startWidth + (e.clientX - Store.startX));
       const newDisplayHeight = Math.max(20, Store.startHeight + (e.clientY - Store.startY));
-      
+
       const maxDisplayWidth = container.clientWidth - parseFloat(Store.currentBlurRegion.element.style.left);
       const maxDisplayHeight = container.clientHeight - parseFloat(Store.currentBlurRegion.element.style.top);
-      
+
       const constrainedDisplayWidth = Math.min(newDisplayWidth, maxDisplayWidth);
       const constrainedDisplayHeight = Math.min(newDisplayHeight, maxDisplayHeight);
-      
+
       Store.currentBlurRegion.element.style.width = constrainedDisplayWidth + 'px';
       Store.currentBlurRegion.element.style.height = constrainedDisplayHeight + 'px';
-      
+
       Store.currentBlurRegion.width = constrainedDisplayWidth / scaleX;
       Store.currentBlurRegion.height = constrainedDisplayHeight / scaleY;
-      
+
       this.applyBlursToCanvas(canvas.getContext('2d'));
     }
   },
@@ -227,7 +270,7 @@ export default {
         this.applyBlursToCanvas(ctx);
       }
     }
-    
+
     Store.isDragging = false;
     Store.isResizing = false;
     Store.currentBlurRegion = null;
@@ -240,7 +283,7 @@ export default {
       }
     });
     Store.blurRegions = [];
-    
+
     const canvas = document.getElementById('blurCanvas');
     if (canvas) {
       const ctx = canvas.getContext('2d');
@@ -251,27 +294,27 @@ export default {
 
   applyBlursToCanvas(ctx) {
     if (!ctx || Store.blurRegions.length === 0) return;
-    
+
     const canvas = ctx.canvas;
-    
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(Store.originalImage, 0, 0);
-    
+
     Store.blurRegions.forEach(region => {
       const imageData = ctx.getImageData(region.x, region.y, region.width, region.height);
-      
+
       const tempCanvas = document.createElement('canvas');
       tempCanvas.width = region.width;
       tempCanvas.height = region.height;
       const tempCtx = tempCanvas.getContext('2d');
-      
+
       tempCtx.putImageData(imageData, 0, 0);
-      
+
       for (let i = 0; i < 3; i++) {
         tempCtx.filter = 'blur(5px)';
         tempCtx.drawImage(tempCanvas, 0, 0);
       }
-      
+
       ctx.filter = 'none';
       ctx.drawImage(tempCanvas, region.x, region.y);
     });
@@ -289,23 +332,57 @@ export default {
         height: region.height
       }));
       
-      const blurredImageDataUrl = canvas.toDataURL('image/png');
+      const blurredImageDataUrl = canvas.toDataURL('image/jpeg', 0.85); // Use JPEG with 85% quality
       
-      Store.currentGuide.steps[Store.currentStepIndex].blurRegions = regionsData;
-      Store.currentGuide.steps[Store.currentStepIndex].blurredScreenshot = blurredImageDataUrl;
+      const step = Store.currentGuide.steps[Store.currentStepIndex];
+      step.blurRegions = regionsData;
       
-      Core.saveGuideData(() => {
-        const stepImage = document.querySelector(`.step-image[data-step="${Store.currentStepIndex}"]`);
-        if (stepImage) {
-          stepImage.src = blurredImageDataUrl;
-        }
+      // If we have a screenshot key, save to IndexedDB
+      if (step.screenshotKey) {
+        StorageManager.saveScreenshot(step.screenshotKey + '_blurred', blurredImageDataUrl)
+          .then(() => {
+            // Update the step to point to the blurred version
+            step.blurredScreenshotKey = step.screenshotKey + '_blurred';
+            
+            // Save the updated guide data
+            Core.saveGuideData(() => {
+              const stepImage = document.querySelector(`.step-image[data-step="${Store.currentStepIndex}"]`);
+              if (stepImage) {
+                stepImage.src = blurredImageDataUrl;
+              }
+              
+              Swal.fire({
+                title: 'Saved!',
+                text: 'Blur Regions Applied Successfully',
+                icon: 'success',
+              });
+            });
+          })
+          .catch(error => {
+            console.error('Error saving blurred image to IndexedDB:', error);
+            Swal.fire({
+              title: 'Error',
+              text: 'Failed to save blurred image: ' + error.message,
+              icon: 'error'
+            });
+          });
+      } else {
+        // For backward compatibility
+        step.blurredScreenshot = blurredImageDataUrl;
         
-        Swal.fire({
-          title: 'Saved!',
-          text: 'Blur Regions Applied Successfully',
-          icon: 'success',
+        Core.saveGuideData(() => {
+          const stepImage = document.querySelector(`.step-image[data-step="${Store.currentStepIndex}"]`);
+          if (stepImage) {
+            stepImage.src = blurredImageDataUrl;
+          }
+          
+          Swal.fire({
+            title: 'Saved!',
+            text: 'Blur Regions Applied Successfully',
+            icon: 'success',
+          });
         });
-      });
+      }
     } catch (error) {
       console.error('Error saving blurred image:', error);
       Swal.fire({
@@ -318,8 +395,36 @@ export default {
 
   downloadImage(stepIndex) {
     const step = Store.currentGuide.steps[stepIndex];
-    const imageSrc = step.blurredScreenshot || step.screenshot;
     
+    // First try to get from IndexedDB if we have keys
+    if (step.blurredScreenshotKey) {
+      StorageManager.getScreenshot(step.blurredScreenshotKey)
+        .then(this._downloadImageFromSrc)
+        .catch(error => {
+          console.error('Error getting blurred screenshot for download:', error);
+          alert('Failed to download image');
+        });
+    } else if (step.screenshotKey) {
+      StorageManager.getScreenshot(step.screenshotKey)
+        .then(this._downloadImageFromSrc)
+        .catch(error => {
+          console.error('Error getting screenshot for download:', error);
+          alert('Failed to download image');
+        });
+    } else {
+      // Fallback to the old way for backward compatibility
+      const imageSrc = step.blurredScreenshot || step.screenshot;
+      
+      if (!imageSrc) {
+        alert('No image available to download');
+        return;
+      }
+      
+      this._downloadImageFromSrc(imageSrc);
+    }
+  },
+
+  _downloadImageFromSrc(imageSrc) {
     if (!imageSrc) {
       alert('No image available to download');
       return;
@@ -327,21 +432,21 @@ export default {
     
     const a = document.createElement('a');
     a.href = imageSrc;
-    a.download = `step-${stepIndex + 1}-${Store.currentGuide.name.replace(/\s+/g, '-').toLowerCase()}.png`;
+    a.download = `step-${step ? stepIndex + 1 : 'unknown'}-${Store.currentGuide.name.replace(/\s+/g, '-').toLowerCase()}.png`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
   },
-  
+
   detectSensitiveInfo() {
     const canvas = document.getElementById('blurCanvas');
     if (!canvas) return;
-    
+
     SensitivityDetector.detectSensitiveInfo(canvas).then(regions => {
       regions.forEach(region => {
         this.createBlurRegion(region.x, region.y, region.width, region.height);
       });
-      
+
       if (regions.length === 0) {
         Swal.fire({
           title: 'No Sensitive Info Detected',
@@ -357,11 +462,11 @@ export default {
       }
     });
   },
-  
+
   applyPresetBlur(presetName) {
     const canvas = document.getElementById('blurCanvas');
     if (!canvas) return;
-    
+
     const region = SensitivityDetector.applyPreset(canvas, presetName);
     if (region) {
       this.createBlurRegion(region.x, region.y, region.width, region.height);
