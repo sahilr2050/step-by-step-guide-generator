@@ -1,54 +1,54 @@
-document.addEventListener('DOMContentLoaded', function() {
-    const guideTitle = document.getElementById('guide-title');
-    const guideContent = document.getElementById('guide-content');
-    const exportPdfBtn = document.getElementById('export-pdf');
-    const exportHtmlBtn = document.getElementById('export-html');
-    
-    // Get guide ID from URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const guideId = urlParams.get('id');
-    
-    if (!guideId) {
-      guideContent.innerHTML = '<div class="error">Guide ID not provided</div>';
+document.addEventListener('DOMContentLoaded', function () {
+  const guideTitle = document.getElementById('guide-title');
+  const guideContent = document.getElementById('guide-content');
+  const exportPdfBtn = document.getElementById('export-pdf');
+  const exportHtmlBtn = document.getElementById('export-html');
+
+  // Get guide ID from URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const guideId = urlParams.get('id');
+
+  if (!guideId) {
+    guideContent.innerHTML = '<div class="error">Guide ID not provided</div>';
+    return;
+  }
+
+  // Load guide data
+  chrome.storage.local.get([guideId], function (data) {
+    if (!data[guideId]) {
+      guideContent.innerHTML = '<div class="error">Guide not found</div>';
       return;
     }
-    
-    // Load guide data
-    chrome.storage.local.get([guideId], function(data) {
-      if (!data[guideId]) {
-        guideContent.innerHTML = '<div class="error">Guide not found</div>';
-        return;
-      }
-      
-      const guide = data[guideId];
-      
-      // Update title
-      guideTitle.textContent = guide.name;
-      
-      // Render steps
-      renderGuide(guide);
-    });
-    
-    function renderGuide(guide) {
-      guideContent.innerHTML = '';
-      
-      if (!guide.steps || guide.steps.length === 0) {
-        guideContent.innerHTML = '<div class="notice">No steps recorded in this guide</div>';
-        return;
-      }
-      
-      // Render each step
-      guide.steps.forEach((step, index) => {
-        const stepElement = document.createElement('div');
-        stepElement.className = 'step';
-        
-        const stepNumber = index + 1;
-        
-        // Format URL for display
-        const url = new URL(step.url);
-        const displayUrl = `${url.hostname}${url.pathname}`;
-        
-        stepElement.innerHTML = `
+
+    const guide = data[guideId];
+
+    // Update title
+    guideTitle.textContent = guide.name;
+
+    // Render steps
+    renderGuide(guide);
+  });
+
+  function renderGuide(guide) {
+    guideContent.innerHTML = '';
+
+    if (!guide.steps || guide.steps.length === 0) {
+      guideContent.innerHTML = '<div class="notice">No steps recorded in this guide</div>';
+      return;
+    }
+
+    // Render each step
+    guide.steps.forEach((step, index) => {
+      const stepElement = document.createElement('div');
+      stepElement.className = 'step';
+
+      const stepNumber = index + 1;
+
+      // Format URL for display
+      const url = new URL(step.url);
+      const displayUrl = `${url.hostname}${url.pathname}`;
+
+      stepElement.innerHTML = `
           <div class="step-header">
             <div class="step-number">Step ${stepNumber}</div>
             <div class="step-location">${step.title} (${displayUrl})</div>
@@ -72,91 +72,91 @@ document.addEventListener('DOMContentLoaded', function() {
             ` : ''}
           </div>
         `;
-        
-        guideContent.appendChild(stepElement);
-      });
-    }
-    
-    function getStepDescription(step, stepNumber) {
-      const element = step.elementInfo;
-      let description = '';
-      
-      if (element.tagName === 'a') {
-        description = `Click on the link "${element.text || element.attributes.href}"`;
-      } else if (element.tagName === 'button') {
-        description = `Click on the button "${element.text || 'Button'}"`;
-      } else if (element.tagName === 'input') {
-        if (element.attributes.type === 'submit') {
-          description = `Click the submit button "${element.attributes.value || 'Submit'}"`;
-        } else if (element.attributes.type === 'button') {
-          description = `Click the button "${element.attributes.value || 'Button'}"`;
-        } else {
-          description = `Click on the ${element.attributes.type || 'input'} field`;
-        }
-      } else if (element.tagName === 'select') {
-        description = `Click on the dropdown menu`;
-      } else if (element.tagName === 'option') {
-        description = `Select the option "${element.text}"`;
-      } else if (element.tagName === 'img') {
-        description = `Click on the image${element.attributes.alt ? ` (${element.attributes.alt})` : ''}`;
-      } else if (element.text) {
-        description = `Click on "${element.text.substring(0, 50)}${element.text.length > 50 ? '...' : ''}"`;
+
+      guideContent.appendChild(stepElement);
+    });
+  }
+
+  function getStepDescription(step, stepNumber) {
+    const element = step.elementInfo;
+    let description = '';
+
+    if (element.tagName === 'a') {
+      description = `Click on the link "${element.text || element.attributes.href}"`;
+    } else if (element.tagName === 'button') {
+      description = `Click on the button "${element.text || 'Button'}"`;
+    } else if (element.tagName === 'input') {
+      if (element.attributes.type === 'submit') {
+        description = `Click the submit button "${element.attributes.value || 'Submit'}"`;
+      } else if (element.attributes.type === 'button') {
+        description = `Click the button "${element.attributes.value || 'Button'}"`;
       } else {
-        description = `Click on the ${element.tagName} element`;
+        description = `Click on the ${element.attributes.type || 'input'} field`;
       }
-      
-      return description;
+    } else if (element.tagName === 'select') {
+      description = `Click on the dropdown menu`;
+    } else if (element.tagName === 'option') {
+      description = `Select the option "${element.text}"`;
+    } else if (element.tagName === 'img') {
+      description = `Click on the image${element.attributes.alt ? ` (${element.attributes.alt})` : ''}`;
+    } else if (element.text) {
+      description = `Click on "${element.text.substring(0, 50)}${element.text.length > 50 ? '...' : ''}"`;
+    } else {
+      description = `Click on the ${element.tagName} element`;
     }
-    
-    // Logger utility
-    function log(message, level = 'info') {
-      console[level](`[Guide] ${message}`);
-    }
-    
-    // Export as PDF
-    exportPdfBtn.addEventListener('click', function() {
-      log('Exporting guide as PDF.');
-      window.print();
+
+    return description;
+  }
+
+  // Logger utility
+  function log(message, level = 'info') {
+    console[level](`[Guide] ${message}`);
+  }
+
+  // Export as PDF
+  exportPdfBtn.addEventListener('click', function () {
+    log('Exporting guide as PDF.');
+    window.print();
+  });
+
+  // Export as HTML
+  exportHtmlBtn.addEventListener('click', function () {
+    // Get guide data
+    chrome.storage.local.get([guideId], function (data) {
+      if (!data[guideId]) return;
+
+      const guide = data[guideId];
+
+      // Create HTML content
+      const htmlContent = generateHtmlContent(guide);
+
+      // Create download link
+      const blob = new Blob([htmlContent], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${guide.name.replace(/\s+/g, '-').toLowerCase()}.html`;
+      a.click();
+
+      // Clean up
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+      }, 100);
     });
-    
-    // Export as HTML
-    exportHtmlBtn.addEventListener('click', function() {
-      // Get guide data
-      chrome.storage.local.get([guideId], function(data) {
-        if (!data[guideId]) return;
-        
-        const guide = data[guideId];
-        
-        // Create HTML content
-        const htmlContent = generateHtmlContent(guide);
-        
-        // Create download link
-        const blob = new Blob([htmlContent], { type: 'text/html' });
-        const url = URL.createObjectURL(blob);
-        
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${guide.name.replace(/\s+/g, '-').toLowerCase()}.html`;
-        a.click();
-        
-        // Clean up
-        setTimeout(() => {
-          URL.revokeObjectURL(url);
-        }, 100);
-      });
-    });
-    
-    function generateHtmlContent(guide) {
-      let stepsHtml = '';
-      
-      guide.steps.forEach((step, index) => {
-        const stepNumber = index + 1;
-        
-        // Format URL for display
-        const url = new URL(step.url);
-        const displayUrl = `${url.hostname}${url.pathname}`;
-        
-        stepsHtml += `
+  });
+
+  function generateHtmlContent(guide) {
+    let stepsHtml = '';
+
+    guide.steps.forEach((step, index) => {
+      const stepNumber = index + 1;
+
+      // Format URL for display
+      const url = new URL(step.url);
+      const displayUrl = `${url.hostname}${url.pathname}`;
+
+      stepsHtml += `
           <div class="step">
             <div class="step-header">
               <div class="step-number">Step ${stepNumber}</div>
@@ -182,9 +182,9 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
           </div>
         `;
-      });
-      
-      return `
+    });
+
+    return `
         <!DOCTYPE html>
         <html>
         <head>
@@ -289,5 +289,5 @@ document.addEventListener('DOMContentLoaded', function() {
         </body>
         </html>
       `;
-    }
-  });
+  }
+});

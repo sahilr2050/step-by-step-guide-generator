@@ -3,7 +3,7 @@ function log(message, level = 'info') {
   console[level](`[Popup] ${message}`);
 }
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
   const startPanel = document.getElementById('start-panel');
   const recordingPanel = document.getElementById('recording-panel');
   const resultPanel = document.getElementById('result-panel');
@@ -15,11 +15,11 @@ document.addEventListener('DOMContentLoaded', function() {
   const viewGuideBtn = document.getElementById('view-guide');
   const newRecordingBtn = document.getElementById('new-recording');
   const viewCreatedGuidesBtn = document.getElementById('view-created-guides');
-  
+
   let currentGuideId = null;
-  
+
   // Check if we're already recording
-  chrome.storage.local.get(['isRecording', 'currentGuideId', 'stepCount'], function(data) {
+  chrome.storage.local.get(['isRecording', 'currentGuideId', 'stepCount'], function (data) {
     if (chrome.runtime.lastError) {
       log(`Error retrieving storage data: ${chrome.runtime.lastError}`, 'error');
       return;
@@ -32,16 +32,16 @@ document.addEventListener('DOMContentLoaded', function() {
       log('Resumed recording session.');
     }
   });
-  
+
   // Start recording
-  startRecordingBtn.addEventListener('click', function() {
+  startRecordingBtn.addEventListener('click', function () {
     const guideName = guideNameInput.value.trim();
-    
+
     if (!guideName) {
       alert('Please enter a guide name');
       return;
     }
-    
+
     currentGuideId = Date.now().toString();
     const guideData = {
       id: currentGuideId,
@@ -49,16 +49,16 @@ document.addEventListener('DOMContentLoaded', function() {
       steps: [],
       dateCreated: new Date().toISOString()
     };
-    
+
     chrome.storage.local.set({
       isRecording: true,
       currentGuideId: currentGuideId,
       stepCount: 0,
       [currentGuideId]: guideData
-    }, function() {
+    }, function () {
       startPanel.classList.add('hidden');
       recordingPanel.classList.remove('hidden');
-      
+
       // Send message to background script to start recording
       chrome.runtime.sendMessage({
         action: 'startRecording',
@@ -66,43 +66,43 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     });
   });
-  
+
   // Stop recording
-  stopRecordingBtn.addEventListener('click', function() {
+  stopRecordingBtn.addEventListener('click', function () {
     chrome.runtime.sendMessage({
       action: 'stopRecording',
       guideId: currentGuideId
-    }, function(response) {
+    }, function (response) {
       chrome.storage.local.set({
         isRecording: false
-      }, function() {
+      }, function () {
         recordingPanel.classList.add('hidden');
         resultPanel.classList.remove('hidden');
-        
-        chrome.storage.local.get(['stepCount'], function(data) {
+
+        chrome.storage.local.get(['stepCount'], function (data) {
           finalStepCount.textContent = data.stepCount || 0;
         });
       });
     });
   });
-  
+
   // View Guide button
-  viewGuideBtn.addEventListener('click', function() {
+  viewGuideBtn.addEventListener('click', function () {
     chrome.tabs.create({
       url: `guide.html?id=${currentGuideId}`
     });
   });
-  
+
   // New Recording button
-  newRecordingBtn.addEventListener('click', function() {
+  newRecordingBtn.addEventListener('click', function () {
     resultPanel.classList.add('hidden');
     startPanel.classList.remove('hidden');
     guideNameInput.value = '';
   });
-  
+
   // View Created Guides button
-  viewCreatedGuidesBtn.addEventListener('click', function() {
-    chrome.storage.local.get(null, function(data) {
+  viewCreatedGuidesBtn.addEventListener('click', function () {
+    chrome.storage.local.get(null, function (data) {
       const guideIds = Object.keys(data).filter(key => data[key].id);
       if (guideIds.length === 0) {
         alert('No guides found.');
@@ -111,9 +111,9 @@ document.addEventListener('DOMContentLoaded', function() {
       window.open('guideList.html', '_blank');
     });
   });
-  
+
   // Listen for step count updates
-  chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+  chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     if (request.action === 'updateStepCount') {
       stepCounter.textContent = request.count;
     }

@@ -9,25 +9,25 @@ function log(message, level = 'info') {
 }
 
 // Listen for messages from background script
-chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   if (request.action === 'recordingStarted') {
     isRecording = true;
     currentGuideId = request.guideId;
     addClickListeners();
     sendResponse({ success: true });
   }
-  
+
   if (request.action === 'recordingStopped') {
     isRecording = false;
     removeClickListeners();
     sendResponse({ success: true });
   }
-  
+
   return true;
 });
 
 // Check if we're already recording
-chrome.storage.local.get(['isRecording', 'currentGuideId'], function(data) {
+chrome.storage.local.get(['isRecording', 'currentGuideId'], function (data) {
   if (data.isRecording) {
     isRecording = true;
     currentGuideId = data.currentGuideId;
@@ -54,36 +54,36 @@ const CLICK_DEBOUNCE_TIME = 1000; // 1 second debounce
 
 function handleClick(event) {
   if (!isRecording || isProcessingClick) return;
-  
+
   // Implement debounce to prevent multiple rapid captures
   const now = Date.now();
   if (now - lastClickTime < CLICK_DEBOUNCE_TIME) {
     return;
   }
   lastClickTime = now;
-  
+
   // Set processing flag to prevent multiple captures
   isProcessingClick = true;
-  
+
   // Prevent default action to capture the click
   event.preventDefault();
   event.stopPropagation();
-  
+
   const element = event.target;
-  
+
   // Create highlight effect
   highlightElement = createHighlight(element);
   document.body.appendChild(highlightElement);
-  
+
   // Get element information
   const elementInfo = getElementInfo(element);
-  
+
   // Delay to allow the highlight to be visible in the screenshot
   setTimeout(() => {
     // Take screenshot
-    chrome.runtime.sendMessage({ action: 'captureVisibleTab' }, function(response) {
+    chrome.runtime.sendMessage({ action: 'captureVisibleTab' }, function (response) {
       const screenshot = response?.screenshot || null;
-      
+
       // Record step
       const stepData = {
         timestamp: new Date().toISOString(),
@@ -92,23 +92,23 @@ function handleClick(event) {
         elementInfo: elementInfo,
         screenshot: screenshot
       };
-      
+
       // Send step data to background script
       chrome.runtime.sendMessage({
         action: 'recordStep',
         stepData: stepData
       });
-      
+
       // Remove highlight after a short delay
       setTimeout(() => {
         if (highlightElement) {
           document.body.removeChild(highlightElement);
           highlightElement = null;
         }
-        
+
         // Reset processing flag before executing the click
         isProcessingClick = false;
-        
+
         // Now execute the original click
         simulateClick(element);
       }, 200);
@@ -119,16 +119,16 @@ function handleClick(event) {
 function getElementInfo(element) {
   // Get text content
   let text = element.textContent?.trim() || '';
-  
+
   // Get element attributes
   const attributes = {};
   Array.from(element.attributes).forEach(attr => {
     attributes[attr.name] = attr.value;
   });
-  
+
   // Get element path
   const path = getElementPath(element);
-  
+
   return {
     tagName: element.tagName.toLowerCase(),
     text: text,
@@ -159,7 +159,7 @@ function getElementPath(element) {
 function createHighlight(element) {
   const rect = element.getBoundingClientRect();
   const highlight = document.createElement('div');
-  
+
   highlight.className = 'step-highlight';
   highlight.style.position = 'fixed';
   highlight.style.left = `${rect.left}px`;
@@ -171,7 +171,7 @@ function createHighlight(element) {
   highlight.style.boxShadow = '0 0 0 2000px rgba(0, 0, 0, 0.3)';
   highlight.style.zIndex = '9999999';
   highlight.style.pointerEvents = 'none';
-  
+
   return highlight;
 }
 

@@ -42,6 +42,13 @@ header {
     padding: 0 20px;
 }
 
+h1 {
+    color: var(--primary-color);
+    margin: 0;
+    font-size: 24px;
+}
+
+/* Button styles */
 button {
     padding: 8px 15px;
     background-color: #1a73e8;
@@ -57,26 +64,12 @@ button:hover {
     background-color: #0d62d1;
 }
 
-h1 {
-    color: var(--primary-color);
-    margin: 0;
-    font-size: 24px;
-}
-
-.loading {
-    text-align: center;
-    padding: 30px;
-    font-style: italic;
-    color: #777;
-}
-
 .create-guide-btn {
     background-color: var(--primary-color);
     color: white;
     border: none;
     padding: 10px 20px;
     border-radius: var(--border-radius);
-    cursor: pointer;
     font-weight: 600;
     transition: background-color 0.3s;
 }
@@ -85,6 +78,15 @@ h1 {
     background-color: var(--accent-color);
 }
 
+/* Status indicators */
+.loading {
+    text-align: center;
+    padding: 30px;
+    font-style: italic;
+    color: #777;
+}
+
+/* Card components */
 .card {
     background-color: white;
     border-radius: var(--border-radius);
@@ -150,6 +152,7 @@ table.dataTable tbody tr:hover {
     margin-bottom: 15px;
 }
 
+/* Action buttons */
 .action-btn {
     background-color: transparent;
     border: 1px solid #ddd;
@@ -190,6 +193,7 @@ table.dataTable tbody tr:hover {
     color: white;
 }
 
+/* Empty state styling */
 .empty-state {
     text-align: center;
     padding: 40px 20px;
@@ -201,7 +205,7 @@ table.dataTable tbody tr:hover {
     margin-bottom: 15px;
 }
 
-
+/* Step styling for guides */
 .step {
     background-color: white;
     border-radius: 8px;
@@ -283,5 +287,13 @@ table.dataTable tbody tr:hover {
     .dataTables_filter input {
         width: calc(100% - 70px);
         margin: 5px 0;
+    }
+
+    .step-content {
+        flex-direction: column;
+    }
+
+    .step-screenshot {
+        max-width: 100%;
     }
 }
