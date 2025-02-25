@@ -96,6 +96,18 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     });
     return true;
   }
+
+  if (request.action === "openPopupToResume") {
+    chrome.storage.local.set({
+      resumeGuideId: request.guideId
+    }, function() {
+      // Open the popup
+      chrome.action.openPopup();
+    });
+    
+    sendResponse({ success: true });
+    return true;
+  }
 });
 
 // Listen for tab changes to inject content script into new pages during recording

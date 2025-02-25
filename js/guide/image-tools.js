@@ -1,6 +1,7 @@
 // image-tools.js
 import Store from './store.js';
 import Core from './core.js';
+import SensitivityDetector from './sensitivity-detector.js';
 
 export default {
   openImageModal(imgSrc, stepIndex) {
@@ -330,5 +331,40 @@ export default {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
+  },
+  
+  detectSensitiveInfo() {
+    const canvas = document.getElementById('blurCanvas');
+    if (!canvas) return;
+    
+    SensitivityDetector.detectSensitiveInfo(canvas).then(regions => {
+      regions.forEach(region => {
+        this.createBlurRegion(region.x, region.y, region.width, region.height);
+      });
+      
+      if (regions.length === 0) {
+        Swal.fire({
+          title: 'No Sensitive Info Detected',
+          text: 'No email addresses, names, or other sensitive information was detected.',
+          icon: 'info'
+        });
+      } else {
+        Swal.fire({
+          title: 'Sensitive Info Detected',
+          text: `Found ${regions.length} areas with potentially sensitive information.`,
+          icon: 'success'
+        });
+      }
+    });
+  },
+  
+  applyPresetBlur(presetName) {
+    const canvas = document.getElementById('blurCanvas');
+    if (!canvas) return;
+    
+    const region = SensitivityDetector.applyPreset(canvas, presetName);
+    if (region) {
+      this.createBlurRegion(region.x, region.y, region.width, region.height);
+    }
   }
 };

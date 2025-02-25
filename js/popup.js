@@ -19,18 +19,41 @@ document.addEventListener('DOMContentLoaded', function () {
   let currentGuideId = null;
 
   // Check if we're already recording
-  chrome.storage.local.get(['isRecording', 'currentGuideId', 'stepCount'], function (data) {
+  chrome.storage.local.get(['isRecording', 'resumeGuideId', 'currentGuideId', 'stepCount'], function (data) {
     if (chrome.runtime.lastError) {
       log(`Error retrieving storage data: ${chrome.runtime.lastError}`, 'error');
       return;
     }
+
     if (data.isRecording) {
       startPanel.classList.add('hidden');
       recordingPanel.classList.remove('hidden');
       stepCounter.textContent = data.stepCount || 0;
       currentGuideId = data.currentGuideId;
       log('Resumed recording session.');
+
+      if (data.resumeGuideId) {
+        // Get the guide info
+        chrome.storage.local.get([data.resumeGuideId], function(guideData) {
+          const guide = guideData[data.resumeGuideId];
+          
+          if (guide) {
+            // Fill in the guide name
+            guideNameInput.value = guide.name;
+            
+            // Mark guide as being resumed
+            currentGuideId = data.resumeGuideId;
+            
+            // Update UI to show we're resuming
+            document.getElementById('start-recording').textContent = 'Resume Recording';
+            
+            // Clear the resumeGuideId flag so it doesn't persist
+            chrome.storage.local.remove('resumeGuideId');
+          }
+        });
+      }
     }
+
   });
 
   // Start recording
