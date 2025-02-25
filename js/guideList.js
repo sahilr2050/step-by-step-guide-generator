@@ -19,6 +19,15 @@ $(document).ready(function () {
     const guideId = $(this).data('id').toString();
     deleteGuide(guideId);
   });
+  
+  $(document).on('click', '.resume-btn', function () {
+    const guideId = $(this).data('id').toString();
+    // Open popup to resume recording for this guide
+    chrome.runtime.sendMessage({
+      action: 'openPopupToResume',
+      guideId: guideId
+    });
+  });
 });
 
 // Load guides from Chrome storage
@@ -63,6 +72,7 @@ window.loadGuides = function () {
       const actions = `
           <div class="action-btn-group">
             <button class="btn btn-sm btn-primary view-btn" data-id="${guide.id}"><i class="fas fa-eye"></i></button>
+            <button class="btn btn-sm btn-success resume-btn" data-id="${guide.id}"><i class="fas fa-play"></i></button>
             <button class="btn btn-sm btn-warning edit-btn" data-id="${guide.id}"><i class="fas fa-pencil-alt"></i></button>
             <button class="btn btn-sm btn-danger delete-btn" data-id="${guide.id}"><i class="fas fa-trash"></i></button>
           </div>

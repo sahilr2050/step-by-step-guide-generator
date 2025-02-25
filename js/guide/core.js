@@ -34,7 +34,15 @@ export default {
     Store.addBlurBtn.addEventListener('click', () => ImageTools.addBlurRegion());
     Store.removeBlurBtn.addEventListener('click', () => ImageTools.removeAllBlurRegions());
     Store.saveBlurredImageBtn.addEventListener('click', () => ImageTools.saveBlurredImage());
-    
+    Store.detectSensitiveBtn.addEventListener('click', () => ImageTools.detectSensitiveInfo());    
+    document.querySelectorAll('.preset-blur').forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.preventDefault();
+        const preset = e.target.dataset.preset;
+        ImageTools.applyPresetBlur(preset);
+      });
+    });
+
     document.addEventListener('mousemove', (e) => ImageTools.handleMouseMove(e));
     document.addEventListener('mouseup', () => ImageTools.handleMouseUp());
   },

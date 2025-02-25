@@ -43,6 +43,18 @@
         <button id="addBlurRegion" class="btn btn-primary">Add Blur Region</button>
         <button id="saveBlurredImage" class="btn btn-success">Save Changes</button>
         <button id="removeBlurRegion" class="btn btn-danger">Remove All Blurs</button>
+        <div class="dropdown">
+          <button id="blurPresets" class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Blur Presets
+          </button>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item preset-blur" data-preset="header" href="#">Header</a></li>
+            <li><a class="dropdown-item preset-blur" data-preset="footer" href="#">Footer</a></li>
+            <li><a class="dropdown-item preset-blur" data-preset="sidebar" href="#">Sidebar</a></li>
+            <li><a class="dropdown-item preset-blur" data-preset="profileArea" href="#">Profile Area</a></li>
+          </ul>
+        </div>
+        <button id="detectSensitiveInfo" class="btn btn-warning">Detect Sensitive Info</button>
       </div>
       <img id="modalImage" class="modal-image" src="" alt="Screenshot">
     </div>
