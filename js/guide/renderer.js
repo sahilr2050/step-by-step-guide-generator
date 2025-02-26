@@ -168,10 +168,13 @@ export default {
 
     steps.forEach((step, index) => {
       const li = document.createElement('li');
-      li.textContent = `⋮⋮ Step ${index + 1}`;
+      li.innerHTML = `
+        <span class="drag-handle">⋮⋮</span>
+        <span class="step-name">Step ${index + 1}</span>
+      `;
       li.draggable = true;
       li.dataset.index = index;
-      li.classList.add('clickable-step'); // Add class for styling
+      li.classList.add('clickable-step');
       
       // Add click handler to navigate to the step
       li.addEventListener('click', () => {
@@ -183,17 +186,22 @@ export default {
           setTimeout(() => stepElement.classList.remove('highlight-step'), 1500);
         }
       });
-  
-      // Existing drag event handlers
+    
+      // Update drag event handlers
       li.addEventListener('dragstart', (e) => {
         e.dataTransfer.setData('text/plain', index);
         li.classList.add('dragging');
+        // Adding a small delay helps with drag visual feedback
+        setTimeout(() => {
+          li.classList.add('dragging-active');
+        }, 0);
       });
-  
+    
       li.addEventListener('dragend', () => {
         li.classList.remove('dragging');
+        li.classList.remove('dragging-active');
       });
-  
+    
       stepList.appendChild(li);
     });
 
@@ -210,12 +218,28 @@ export default {
 
     stepList.addEventListener('drop', (e) => {
       e.preventDefault();
-      const draggingIndex = parseInt(e.dataTransfer.getData('text/plain'), 10);
-      const newIndex = Array.from(stepList.children).indexOf(document.querySelector('.dragging'));
-      if (draggingIndex !== newIndex) {
-        const [movedStep] = steps.splice(draggingIndex, 1);
-        steps.splice(newIndex, 0, movedStep);
+      const draggedItemIndex = parseInt(e.dataTransfer.getData('text/plain'), 10);
+      
+      // Get the current order of elements in the DOM
+      const allItems = Array.from(stepList.querySelectorAll('li'));
+      const draggedItem = allItems.find(item => parseInt(item.dataset.index) === draggedItemIndex);
+      const newIndex = allItems.indexOf(draggedItem);
+      
+      if (draggedItemIndex !== newIndex && newIndex !== -1) {
+        // Create a copy of steps array to avoid mutation issues
+        const updatedSteps = [...steps];
+        
+        // Move the step to the new position
+        const [movedStep] = updatedSteps.splice(draggedItemIndex, 1);
+        updatedSteps.splice(newIndex, 0, movedStep);
+        
+        // Update the original array
+        steps.length = 0;
+        steps.push(...updatedSteps);
+        
+        // Save guide data and re-render the UI
         Core.saveGuideData(() => {
+          // Re-render both sidebar and guide content
           this.renderSidebar(steps);
           this.renderGuide(Store.currentGuide);
         });

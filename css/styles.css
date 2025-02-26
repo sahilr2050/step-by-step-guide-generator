@@ -493,9 +493,27 @@ table.dataTable tbody tr:hover {
 /* Drag and Drop Styles */
 .drag-handle {
   cursor: grab;
-  margin-right: 10px;
-  color: #666;
-  font-size: 16px;
+  margin-right: 8px;
+  color: #888;
+}
+
+.clickable-step {
+  display: flex;
+  align-items: center;
+}
+
+.dragging-active {
+  border: 2px dashed #1a73e8 !important;
+  background-color: #f0f7ff !important;
+}
+
+.highlight-step {
+  animation: highlight-pulse 1.5s;
+}
+
+@keyframes highlight-pulse {
+  0%, 100% { background-color: white; }
+  50% { background-color: #e8f0fe; }
 }
 
 .step.dragging {
