@@ -1,7 +1,7 @@
 // step-tools.js
 import Store from './store.js';
 import Core from './core.js';
-import { createRichTextToolbar } from './rich-text-toolbar.js';
+import { createMarkdownEditor } from './markdown-editor.js';
 
 export default {
   copyDescription(stepIndex) {
@@ -22,103 +22,98 @@ export default {
     });
   },
 
+  getStep(stepIndex) {
+    return Store.currentGuide.steps[stepIndex];
+  },
+
   makeDescriptionEditable(stepIndex) {
+    const step = this.getStep(stepIndex);
+    const stepElement = document.querySelector(`.step[data-step-index="${stepIndex}"]`);
     const descElement = document.getElementById(`step-desc-${stepIndex}`);
-    descElement.dataset.originalText = descElement.innerHTML;
-    descElement.contentEditable = true;
-    descElement.classList.add('editable');
-    descElement.focus();
+    const titleElement = document.getElementById(`step-title-${stepIndex}`);
+    
+    // Get the description, falling back to element info text if no custom description exists
+    const originalDesc = step.customDescription || 
+                        (step.elementInfo && step.elementInfo.text) || '';
+    const originalTitle = titleElement.textContent.trim();
 
-    // Undo/redo stack
-    let undoStack = [descElement.innerHTML];
-    let redoStack = [];
-    let lastValue = descElement.innerHTML;
-    descElement.addEventListener('input', onInput);
-    descElement.addEventListener('keydown', onKeyDown);
+    // Clear and create container for editor
+    descElement.innerHTML = '';
+    
+    // Create markdown editor
+    const mdEditor = createMarkdownEditor(originalDesc, (newValue) => {
+      // Update preview as user types
+      descElement._getMarkdownValue = () => newValue;
+    });
+    
+    // Store the editor instance for cleanup
+    descElement._editor = mdEditor;
+    descElement._getMarkdownValue = () => mdEditor.getValue();
+    
+    // Add editor to DOM
+    descElement.appendChild(mdEditor);
 
-    function onInput() {
-      if (descElement.innerHTML !== lastValue) {
-        undoStack.push(descElement.innerHTML);
-        redoStack = [];
-        lastValue = descElement.innerHTML;
-      }
-    }
-    function onKeyDown(e) {
-      if (e.ctrlKey && e.key === 'z') {
-        e.preventDefault();
-        if (undoStack.length > 1) {
-          redoStack.push(undoStack.pop());
-          descElement.innerHTML = undoStack[undoStack.length - 1];
-          lastValue = descElement.innerHTML;
-        }
-      } else if (e.ctrlKey && (e.key === 'y' || (e.shiftKey && e.key === 'z'))) {
-        e.preventDefault();
-        if (redoStack.length > 0) {
-          const value = redoStack.pop();
-          undoStack.push(value);
-          descElement.innerHTML = value;
-          lastValue = descElement.innerHTML;
-        }
-      }
-    }
+    // Title input
+    const titleInput = document.createElement('input');
+    titleInput.type = 'text';
+    titleInput.value = step.title || '';
+    titleInput.className = 'step-title-input';
+    titleElement.innerHTML = ''; // Clear any existing content first
+    titleElement.appendChild(titleInput);
 
-    // Inject rich text toolbar
-    let toolbar = document.getElementById(`rich-toolbar-${stepIndex}`);
-    if (!toolbar) {
-      toolbar = createRichTextToolbar(descElement);
-      toolbar.id = `rich-toolbar-${stepIndex}`;
-      descElement.parentNode.insertBefore(toolbar, descElement);
-    }
-
+    // Toggle UI elements
     document.getElementById(`editing-controls-${stepIndex}`).style.display = 'block';
-    document.querySelector(`.step-actions`).style.display = 'none';
-
-    // Remove listeners on save/cancel
-    descElement._removeUndoRedoListeners = function () {
-      descElement.removeEventListener('input', onInput);
-      descElement.removeEventListener('keydown', onKeyDown);
-      delete descElement._removeUndoRedoListeners;
-    };
+    document.querySelector(`.step[data-step-index="${stepIndex}"] .step-actions`).style.display = 'none';
+    descElement._getTitleValue = () => titleInput.value;
   },
 
   saveDescription(stepIndex) {
     const descElement = document.getElementById(`step-desc-${stepIndex}`);
-    Store.currentGuide.steps[stepIndex].customDescription = descElement.innerHTML;
+    const titleElement = document.getElementById(`step-title-${stepIndex}`);
+    const step = this.getStep(stepIndex);
     
-    // Remove rich text toolbar
-    const toolbar = document.getElementById(`rich-toolbar-${stepIndex}`);
-    if (toolbar) {
-      toolbar.parentNode.removeChild(toolbar);
+    if (descElement._getMarkdownValue) {
+      step.customDescription = descElement._getMarkdownValue();
     }
-    if (descElement._removeUndoRedoListeners) descElement._removeUndoRedoListeners();
+    if (descElement._getTitleValue) {
+      step.title = descElement._getTitleValue();
+    }
+    
+    // Render the markdown content
+    const descHtml = step.customDescription ? 
+      (window.marked ? window.marked.parse(step.customDescription) : step.customDescription) :
+      '';
+      
+    descElement.innerHTML = `<div class="step-description markdown-body">${descHtml}</div>`;
+    titleElement.innerHTML = step.title || '';
 
     Core.saveGuideData(() => {
       Swal.fire({
         title: 'Saved!',
-        text: 'Step description updated',
+        text: 'Step updated',
         icon: 'success',
         timer: 1500
       });
     });
-    
-    descElement.contentEditable = false;
-    descElement.classList.remove('editable');
     document.getElementById(`editing-controls-${stepIndex}`).style.display = 'none';
-    document.querySelector(`.step-actions`).style.display = 'flex';
+    document.querySelector(`.step[data-step-index="${stepIndex}"] .step-actions`).style.display = 'flex';
   },
 
   cancelEdit(stepIndex) {
     const descElement = document.getElementById(`step-desc-${stepIndex}`);
-    descElement.innerHTML = descElement.dataset.originalText;
-    descElement.contentEditable = false;
-    descElement.classList.remove('editable');
-    // Remove rich text toolbar
-    const toolbar = document.getElementById(`rich-toolbar-${stepIndex}`);
-    if (toolbar) {
-      toolbar.parentNode.removeChild(toolbar);
-    }
-    if (descElement._removeUndoRedoListeners) descElement._removeUndoRedoListeners();
+    const titleElement = document.getElementById(`step-title-${stepIndex}`);
+    const step = Store.currentGuide.steps[stepIndex];
+    
+    // Restore the description with proper markdown rendering
+    const description = step.customDescription || (step.elementInfo && step.elementInfo.text) || '';
+    const descHtml = window.marked ? window.marked.parse(description) : description;
+    descElement.innerHTML = `<div class="step-description markdown-body">${descHtml}</div>`;
+    
+    // Restore the title
+    titleElement.innerHTML = step.title || '';
+    
+    // Toggle UI elements
     document.getElementById(`editing-controls-${stepIndex}`).style.display = 'none';
-    document.querySelector(`.step-actions`).style.display = 'flex';
+    document.querySelector(`.step[data-step-index="${stepIndex}"] .step-actions`).style.display = 'flex';
   }
 };

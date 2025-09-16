@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const recordingPanel = document.getElementById('recording-panel');
   const resultPanel = document.getElementById('result-panel');
   const guideNameInput = document.getElementById('guide-name');
+  const guideTagsInput = document.getElementById('guide-tags');
   const startRecordingBtn = document.getElementById('start-recording');
   const stopRecordingBtn = document.getElementById('stop-recording');
   const stepCounter = document.getElementById('step-counter');
