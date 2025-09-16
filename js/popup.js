@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const recordingPanel = document.getElementById('recording-panel');
   const resultPanel = document.getElementById('result-panel');
   const guideNameInput = document.getElementById('guide-name');
+  const guideTagsInput = document.getElementById('guide-tags');
   const startRecordingBtn = document.getElementById('start-recording');
   const stopRecordingBtn = document.getElementById('stop-recording');
   const stepCounter = document.getElementById('step-counter');
@@ -53,6 +54,15 @@ document.addEventListener('DOMContentLoaded', function () {
       stepCounter.textContent = data.stepCount || 0;
       currentGuideId = data.currentGuideId;
       log('Resumed recording session.');
+
+      // Display guide tags if available
+      chrome.storage.local.get([currentGuideId], function (guideData) {
+        const guide = guideData[currentGuideId];
+        if (guide && guide.tags) {
+          guideTagsDisplay.textContent = `Tags: ${guide.tags.join(', ')}`;
+          guideTagsDisplay.classList.remove('hidden');
+        }
+      });
     }
 
   });
@@ -60,6 +70,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // Start recording
   startRecordingBtn.addEventListener('click', function () {
     const guideName = guideNameInput.value.trim();
+    const guideTags = guideTagsInput.value.trim();
 
     if (!guideName) {
       alert('Please enter a guide name');
@@ -81,6 +92,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const guideData = {
         id: currentGuideId,
         name: guideName,
+        tags: guideTags.split(',').map(t => t.trim()).filter(Boolean),
         steps: [],
         dateCreated: new Date().toISOString()
       };

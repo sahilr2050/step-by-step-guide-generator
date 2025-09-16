@@ -27,38 +27,36 @@ export default {
     stepElement.className = 'step';
     stepElement.dataset.stepIndex = index;
     stepElement.dataset.stepId = step.id || step.timestamp;
-  
+
     const stepNumber = index + 1;
-    const url = new URL(step.url);
-    const displayUrl = `${url.hostname}${url.pathname}`;
     const descriptionId = `step-desc-${index}`;
-    
-    // Basic HTML without screenshot first (we'll add it later)
+
+    // Get the description, falling back to element info text if no custom description exists
+  const description = step.customDescription || (step.elementInfo && step.elementInfo.text) || '';
+  const descHtml = window.marked ? window.marked.parse(description) : description;
     stepElement.innerHTML = `
       <div class="step-header">
         <div class="step-number">Step ${stepNumber}</div>
+        <div class="step-title" id="step-title-${index}">${step.title || ''}</div>
         <button class="btn btn-danger btn-sm delete-step-btn" data-index="${index}">Delete</button>
       </div>
       <div class="step-content">
         <div class="step-details">
-          <div class="step-description">
-            <div id="${descriptionId}" class="step-desc-content">${Utils.getStepDescription(step, stepNumber)}</div>
-            <div class="step-actions">
-              <button class="btn btn-primary btn-sm edit-description mt-2" data-step="${index}">Edit</button>
-              <button class="btn btn-secondary btn-sm copy-description mt-2" data-step="${index}">Copy</button>
-            </div>
-            <div class="editing-controls" id="editing-controls-${index}">
+          <div class="step-description markdown-body" id="${descriptionId}">${descHtml}</div>
+          <div class="step-actions">
+            <button class="btn btn-primary btn-sm edit-description mt-2" data-step="${index}">Edit</button>
+            <button class="btn btn-secondary btn-sm copy-description mt-2" data-step="${index}">Copy</button>
+          </div>
+          <div class="editing-controls" id="editing-controls-${index}" style="display:none;">
               <button class="btn btn-sm btn-success save-btn save-description" data-step="${index}">Save</button>
               <button class="btn btn-sm btn-danger cancel-btn cancel-edit" data-step="${index}">Cancel</button>
             </div>
-          </div>
           <div class="step-element-info">
             <strong>Element:</strong> ${step.elementInfo.tagName}
             ${step.elementInfo.attributes.id ? `<br><strong>ID:</strong> ${step.elementInfo.attributes.id}` : ''}
             ${step.elementInfo.attributes.class ? `<br><strong>Class:</strong> ${step.elementInfo.attributes.class}` : ''}
             ${step.elementInfo.text ? `<br><strong>Text:</strong> "${step.elementInfo.text.substring(0, 100)}${step.elementInfo.text.length > 100 ? '...' : ''}"` : ''}
             ${step.title ? `<br><strong>Title:</strong> ${step.title}` : ''}
-            ${step.url ? `<br><strong>URL:</strong> ${displayUrl}` : ''}
           </div>
         </div>
         <div class="step-screenshot">
