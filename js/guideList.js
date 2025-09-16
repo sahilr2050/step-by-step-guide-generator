@@ -32,6 +32,7 @@ function loadGuides() {
 
     guides.forEach(guide => {
       const formattedDate = new Date(guide.date).toLocaleDateString();
+      const tagsText = guide.data.tags && guide.data.tags.length > 0 ? `<div class='guide-tags'>${guide.data.tags.join(', ')}</div>` : '';
       const actions = `
         <div class="action-btn-group">
           <button class="btn btn-sm btn-primary view-btn" data-id="${guide.id}"><i class="fas fa-eye"></i></button>
@@ -41,7 +42,7 @@ function loadGuides() {
         </div>
       `;
 
-      table.row.add([guide.name, formattedDate, actions]);
+      table.row.add([guide.name + tagsText, formattedDate, actions]);
     });
 
     table.draw();
