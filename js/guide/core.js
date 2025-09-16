@@ -27,125 +27,23 @@ export default {
     });
 
     document.getElementById('exportConfluence').addEventListener('click', () => {
-      this.exportToConfluence();
+      ExportTools.exportToConfluence(Store.currentGuide);
     });
 
     document.getElementById('exportNotion').addEventListener('click', () => {
-      this.exportToNotion();
+      ExportTools.exportToNotion(Store.currentGuide);
+    });
+
+    // PDF Export
+    document.getElementById('exportPDF').addEventListener('click', () => {
+      ExportTools.exportToPDF(Store.currentGuide);
+    });
+
+    document.getElementById('exportMarkdownWithImages').addEventListener('click', () => {
+      ExportTools.exportToMarkdownWithImages(Store.currentGuide);
     });
   },
-
-  exportToConfluence() {
-    // In a real implementation, this would show a dialog to configure space, etc.
-    Swal.fire({
-      title: 'Confluence Export',
-      html: `
-        <form id="confluenceForm">
-          <div class="mb-3">
-            <label for="confluenceUrl" class="form-label">Confluence URL</label>
-            <input type="url" class="form-control" id="confluenceUrl" placeholder="https://yourcompany.atlassian.net">
-          </div>
-          <div class="mb-3">
-            <label for="confluenceSpace" class="form-label">Space Key</label>
-            <input type="text" class="form-control" id="confluenceSpace" placeholder="DOC">
-          </div>
-          <div class="mb-3">
-            <label for="confluenceToken" class="form-label">API Token</label>
-            <input type="password" class="form-control" id="confluenceToken">
-          </div>
-        </form>
-      `,
-      showCancelButton: true,
-      confirmButtonText: 'Export',
-      preConfirm: () => {
-        // Get form values
-        const url = document.getElementById('confluenceUrl').value;
-        const space = document.getElementById('confluenceSpace').value;
-        const token = document.getElementById('confluenceToken').value;
-
-        if (!url || !space || !token) {
-          Swal.showValidationMessage('Please fill in all fields');
-          return false;
-        }
-
-        return { url, space, token };
-      }
-    }).then((result) => {
-      if (result.isConfirmed) {
-        // Show a "preparing export" message
-        Swal.fire({
-          title: 'Preparing Export',
-          text: 'Generating Confluence data...',
-          allowOutsideClick: false,
-          didOpen: () => {
-            Swal.showLoading();
-          }
-        });
-
-        // Simulate API call
-        setTimeout(() => {
-          Swal.fire({
-            title: 'Export Successful',
-            text: 'The guide has been exported to Confluence.',
-            icon: 'success'
-          });
-        }, 1500);
-      }
-    });
-  },
-
-  exportToNotion() {
-    // Similar implementation to Confluence export
-    Swal.fire({
-      title: 'Notion Export',
-      html: `
-        <form id="notionForm">
-          <div class="mb-3">
-            <label for="notionToken" class="form-label">Notion Integration Token</label>
-            <input type="password" class="form-control" id="notionToken">
-          </div>
-          <div class="mb-3">
-            <label for="notionDatabase" class="form-label">Database ID (optional)</label>
-            <input type="text" class="form-control" id="notionDatabase" placeholder="Optional">
-          </div>
-        </form>
-      `,
-      showCancelButton: true,
-      confirmButtonText: 'Export',
-      preConfirm: () => {
-        const token = document.getElementById('notionToken').value;
-        const database = document.getElementById('notionDatabase').value;
-
-        if (!token) {
-          Swal.showValidationMessage('API token is required');
-          return false;
-        }
-
-        return { token, database };
-      }
-    }).then((result) => {
-      if (result.isConfirmed) {
-        Swal.fire({
-          title: 'Preparing Export',
-          text: 'Generating Notion data...',
-          allowOutsideClick: false,
-          didOpen: () => {
-            Swal.showLoading();
-          }
-        });
-
-        // Simulate API call
-        setTimeout(() => {
-          Swal.fire({
-            title: 'Export Successful',
-            text: 'The guide has been exported to Notion.',
-            icon: 'success'
-          });
-        }, 1500);
-      }
-    });
-  },
-
+  
   setupModalListeners() {
     Store.modalClose.addEventListener('click', () => {
       Store.imageModal.style.display = 'none';

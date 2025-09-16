@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Step-by-Step Guide Generator",
-  "version": "1.0",
+  "version": "1.0.3",
   "description": "Create step-by-step guides by recording user actions with highlighted screenshots. Includes logging for debugging and tracking.",
   "action": {
     "default_popup": "popup.html",
