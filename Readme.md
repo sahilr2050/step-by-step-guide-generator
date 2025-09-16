@@ -9,10 +9,21 @@ A Chrome extension that allows users to easily create, edit and share interactiv
 
 - **Record user interactions** to automatically generate step-by-step guides
 - **Screenshot capture** with each action
+- **Rich markdown editing** with EasyMDE editor for step descriptions
+  - Bold, italic, underline, lists, and links support
+  - Live markdown preview
+  - Undo/redo functionality (toolbar and Ctrl+Z/Ctrl+Y)
+- **Step title editing** alongside description editing
+- **Guide categories and tags** for better organization
 - **Interactive editing** of guide content
-- **Image annotation** with blur regions for sensitive information
-- **Guide organization** with drag-and-drop reordering
-- **Export options** for sharing guides (Markdown, Confluence, Notion)
+- **Image annotation** with blur regions and sensitive information detection
+- **Enhanced step reordering** with drag-and-drop functionality
+- **Comprehensive export options**:
+  - PDF export
+  - Markdown export
+  - Markdown with images as ZIP
+  - Confluence format
+  - Notion format
 - **Resume recording** to add steps to existing guides
 
 ## Installation
@@ -39,10 +50,13 @@ Visit the [Chrome Web Store](https://chrome.google.com/webstore/detail/step-by-s
 ### Editing a Guide
 1. Click "View Created Guides" from the extension popup
 2. Select a guide to edit
-3. Use the editor to:
-   - Edit step descriptions
-   - Add blur regions to screenshots
+3. Use the enhanced editor to:
+   - Edit step titles and descriptions with rich markdown support
+   - Use the EasyMDE toolbar for formatting (bold, italic, lists, links)
+   - Add categories and tags to organize your guides
+   - Add blur regions to screenshots with automatic sensitive info detection
    - Reorder steps by dragging them in the sidebar
+   - Use undo/redo (Ctrl+Z/Ctrl+Y or toolbar buttons)
    - Delete unwanted steps
 
 ### Resuming a Guide
@@ -51,10 +65,12 @@ Visit the [Chrome Web Store](https://chrome.google.com/webstore/detail/step-by-s
 3. Continue recording additional steps
 
 ### Exporting Guides
-Guides can be exported in several formats:
-- Markdown
-- Confluence
-- Notion
+Guides can be exported in multiple formats:
+- **PDF** - Professional document format
+- **Markdown** - Plain text with formatting
+- **Markdown with Images as ZIP** - Complete package with all screenshots
+- **Confluence** - Ready for Atlassian Confluence
+- **Notion** - Compatible with Notion workspace
 
 ## Privacy
 
@@ -91,11 +107,14 @@ MIT License - see LICENSE file for details
 - Screenshot images: IndexedDB (for larger storage capacity)
 
 ### Technologies
-- JavaScript (ES6+)
+- JavaScript (ES6+ with ES modules)
 - Chrome Extension APIs
+- EasyMDE (Markdown editor)
+- Marked.js (Markdown parsing)
 - jQuery
 - DataTables
 - SweetAlert2
+- IndexedDB (enhanced image storage)
 
 ## Troubleshooting
 
